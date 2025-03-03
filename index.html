@@ -1797,50 +1797,19 @@
       }
 
       function isEDT(date) {
-        const year = date.getFullYear();
-
-        const dstStart = new Date(year, 2, 1);
-        dstStart.setDate(14 - dstStart.getDay());
-        dstStart.setHours(2, 0, 0, 0);
-
-        const dstEnd = new Date(year, 10, 1);
-        dstEnd.setDate(7 - dstEnd.getDay());
-        dstEnd.setHours(1, 59, 59, 999);
-
         const easternDate = new Date(
           date.toLocaleString('en-US', { timeZone: 'America/New_York' })
         );
 
-        const month = easternDate.getMonth();
-        const day = easternDate.getDate();
-        const hours = easternDate.getHours();
-        const minutes = easternDate.getMinutes();
+        const year = easternDate.getFullYear();
 
-        if (easternDate.getTime() === dstStart.getTime()) {
-          return true;
-        } else if (month === 2 && day === dstStart.getDate() && hours >= 2) {
-          return true;
-        } else if (month === 10 && day === dstEnd.getDate() && hours === 1) {
-          const standardDate = new Date(date);
-          standardDate.setHours(1);
-          return (
-            standardDate.getTime() <= date.getTime() &&
-            date.getTime() < new Date(standardDate.getTime() + 3600000)
-          );
-        }
+        let dstStart = new Date(year, 2, 14, 2, 0, 0);
+        dstStart.setDate(14 - dstStart.getDay()); 
 
-        return date > dstStart && date <= dstEnd;
-      }
+        let dstEnd = new Date(year, 10, 7, 2, 0, 0); 
+        dstEnd.setDate(7 - dstEnd.getDay());
 
-      function isEDT(date) {
-        const year = date.getUTCFullYear();
-
-        const dstStart = new Date(Date.UTC(year, 2, 8, 7, 0, 0));
-        dstStart.setUTCDate(8 - dstStart.getUTCDay());
-
-        const dstEnd = new Date(Date.UTC(year, 10, 1, 6, 0, 0));
-        dstEnd.setUTCDate(1 + ((7 - dstEnd.getUTCDay()) % 7));
-        return date >= dstStart && date < dstEnd;
+        return easternDate >= dstStart && easternDate < dstEnd;
       }
 
       function convertDataToCSV(data, type = 'minutely') {
