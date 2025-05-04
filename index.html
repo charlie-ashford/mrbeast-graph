@@ -697,6 +697,10 @@
             Minutely Data <br />
             (Past Week)
           </button>
+          <button id="downloadMinutelyDayData">
+            Minutely Data <br />
+            (Past Day)
+          </button>
           <button id="downloadTenMinutelyData">10 Minutely Data</button>
           <button id="downloadHourlyData">Hourly Data</button>
           <button id="downloadDailyData">Daily Data (UTC)</button>
@@ -1290,6 +1294,16 @@
           });
 
         document
+          .getElementById('downloadMinutelyDayData')
+          .addEventListener('click', function () {
+            handleCsvDownload(
+              'https://api.communitrics.com/mrbeast?minutelyPastDay=true',
+              'MrBeast_Minutely_Subscribers_(Past_Day).csv',
+              'minutelyPastDay'
+            );
+          });
+
+        document
           .getElementById('downloadTenMinutelyData')
           .addEventListener('click', function () {
             handleCsvDownload(
@@ -1821,6 +1835,8 @@
             ? 'Minutely Gains'
             : type === 'minutelyPastWeek'
             ? 'Minutely Gains'
+            : type === 'minutelyPastDay'
+            ? 'Minutely Gains'
             : type === 'tenminutely'
             ? '10 Minutely Gains'
             : type === 'hourly'
@@ -1896,6 +1912,8 @@
           type === 'minutely'
             ? 60 * 1000
             : type === 'minutelyPastWeek'
+            ? 60 * 1000
+            : type === 'minutelyPastDay'
             ? 60 * 1000
             : type === 'tenminutely'
             ? 10 * 60 * 1000
