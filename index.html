@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
-        <link
+    <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
@@ -108,7 +108,8 @@
 
       #info {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: auto auto;
         gap: 30px;
         margin: 48px auto;
         width: 96%;
@@ -125,6 +126,10 @@
           0 0 0 1px rgba(255, 255, 255, 0.1);
         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
       }
 
       .info-tile:hover {
@@ -153,6 +158,32 @@
         transform: rotate(0deg);
         background: radial-gradient(
           circle,
+          rgba(31, 185, 219, 0.12) 0%,
+          rgba(31, 185, 219, 0) 70%
+        );
+      }
+
+      .info-tile:nth-child(1),
+      .info-tile:nth-child(2) {
+        grid-column: span 2;
+        height: 220px;
+        padding: 25px;
+      }
+
+      .info-tile:nth-child(1)::before,
+      .info-tile:nth-child(2)::before {
+        width: 150%;
+        height: 150%;
+        top: -25%;
+        left: -25%;
+        transform: none;
+      }
+
+      .info-tile:nth-child(1):hover::before,
+      .info-tile:nth-child(2):hover::before {
+        transform: none;
+        background: radial-gradient(
+          circle at center,
           rgba(31, 185, 219, 0.12) 0%,
           rgba(31, 185, 219, 0) 70%
         );
@@ -562,12 +593,38 @@
 
         #info {
           grid-template-columns: 1fr;
+          grid-template-rows: auto;
           gap: 25px;
         }
 
-        #info {
-          grid-template-columns: 1fr;
-          gap: 20px;
+        .info-tile:nth-child(1),
+        .info-tile:nth-child(2) {
+          grid-column: span 1;
+        }
+
+        .info-tile:nth-child(1),
+        .info-tile:nth-child(2) {
+          height: auto;
+          padding: 25px;
+        }
+
+        .info-tile:nth-child(1)::before,
+        .info-tile:nth-child(2)::before {
+          width: 200%;
+          height: 200%;
+          top: -50%;
+          left: -50%;
+          transform: rotate(30deg);
+        }
+
+        .info-tile:nth-child(1):hover::before,
+        .info-tile:nth-child(2):hover::before {
+          transform: rotate(0deg);
+          background: radial-gradient(
+            circle,
+            rgba(31, 185, 219, 0.12) 0%,
+            rgba(31, 185, 219, 0) 70%
+          );
         }
 
         .info-tile {
@@ -832,6 +889,42 @@
         lastScrollTop = scrollTop;
       });
 
+      function calculateGainedToday(data) {
+        const now = new Date();
+        const easternTime = new Date(
+          now.toLocaleString('en-US', { timeZone: 'America/New_York' })
+        );
+
+        const startOfDayEastern = new Date(easternTime);
+        startOfDayEastern.setHours(0, 0, 0, 0);
+
+        let startOfDayCount = null;
+        let closestTimeDiff = Infinity;
+
+        for (const entry of data) {
+          const entryTime = new Date(entry.currentTime);
+          const entryTimeEastern = new Date(
+            entryTime.toLocaleString('en-US', { timeZone: 'America/New_York' })
+          );
+          const timeDiff = Math.abs(entryTimeEastern - startOfDayEastern);
+
+          if (
+            timeDiff < closestTimeDiff &&
+            entryTimeEastern <= startOfDayEastern
+          ) {
+            closestTimeDiff = timeDiff;
+            startOfDayCount = entry.count;
+          }
+        }
+
+        if (startOfDayCount === null && data.length > 0) {
+          startOfDayCount = data[0].count;
+        }
+
+        const latestCount = data.length > 0 ? data[data.length - 1].count : 0;
+        return latestCount - startOfDayCount;
+      }
+
       async function updateInfoSection(filteredData) {
         const formatNumber = (num, decimalPlaces = 0) =>
           num.toLocaleString(undefined, {
@@ -856,10 +949,7 @@
         };
 
         const firstEntry = {
-          currentTime: moment.tz(
-            '2025-01-01 00:00:00.000',
-            'America/New_York'
-          ),
+          currentTime: moment.tz('2025-01-01 00:00:00.000', 'America/New_York'),
           count: 340665376,
         };
         const lastEntry = filteredData[filteredData.length - 1];
@@ -871,19 +961,68 @@
 
         const now = new Date();
         const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const recentData = filteredData.filter(
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const thirtyDaysAgo = new Date(
+          now.getTime() - 30 * 24 * 60 * 60 * 1000
+        );
+        const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+        const recentData24Hours = filteredData.filter(
           entry => new Date(entry.currentTime) >= oneDayAgo
         );
+        const recentData7Days = filteredData.filter(
+          entry => new Date(entry.currentTime) >= sevenDaysAgo
+        );
+        const recentData30Days = filteredData.filter(
+          entry => new Date(entry.currentTime) >= thirtyDaysAgo
+        );
+        const recentData365Days = filteredData.filter(
+          entry => new Date(entry.currentTime) >= oneYearAgo
+        );
 
-        const recentGained =
-          recentData.length > 1
-            ? recentData[recentData.length - 1].count - recentData[0].count
+        const recentGained24Hours =
+          recentData24Hours.length > 1
+            ? recentData24Hours[recentData24Hours.length - 1].count -
+              recentData24Hours[0].count
+            : 0;
+
+        const recentGained7Days =
+          recentData7Days.length > 1
+            ? recentData7Days[recentData7Days.length - 1].count -
+              recentData7Days[0].count
+            : 0;
+
+        const recentGained365Days =
+          recentData365Days.length > 1
+            ? recentData365Days[recentData365Days.length - 1].count -
+              recentData365Days[0].count
+            : 0;
+
+        const recentGained30Days =
+          recentData30Days.length > 1
+            ? recentData30Days[recentData30Days.length - 1].count -
+              recentData30Days[0].count
             : 0;
 
         const subs24HoursAgo =
-          recentData.length > 0
-            ? recentData[0].count
-            : lastEntry.count - recentGained;
+          recentData24Hours.length > 0
+            ? recentData24Hours[0].count
+            : lastEntry.count - recentGained24Hours;
+
+        const subs7DaysAgo =
+          recentData7Days.length > 0
+            ? recentData7Days[0].count
+            : lastEntry.count - recentGained7Days;
+
+        const subs30DaysAgo =
+          recentData30Days.length > 0
+            ? recentData30Days[0].count
+            : lastEntry.count - recentGained30Days;
+
+        const subs365DaysAgo =
+          recentData365Days.length > 0
+            ? recentData365Days[0].count
+            : lastEntry.count - recentGained365Days;
 
         const formatTime = ms => {
           const days = Math.floor(ms / (1000 * 60 * 60 * 24));
@@ -904,52 +1043,88 @@
 
         const infoDiv = document.getElementById('info');
         infoDiv.innerHTML = `
-    <div class="info-tile">
-      <div class="info-tile-header">Current Subscriber Count</div>
-      <div class="info-tile-value">${formatNumber(lastEntry.count)}</div>
-      <div class="info-tile-change"><strong>Latest update:</strong> ${formatDateTime(
-        lastEntry.currentTime
-      )}</div>
+  <div class="info-tile">
+    <div class="info-tile-header">Subscriber Count</div>
+    <div class="info-tile-value">${formatNumber(lastEntry.count)}</div>
+    <div class="info-tile-change"><strong>Latest update:</strong> ${formatDateTime(
+      lastEntry.currentTime
+    )}</div>
+<div class="info-tile-change" style="margin-top: 8px;"><strong>Gained today:</strong> ${formatNumber(
+          calculateGainedToday(filteredData)
+        )} subscribers</div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">2025 Growth</div>
+    <div class="info-tile-value">${formatNumber(totalGained)}</div>
+    <div class="info-tile-change"><strong>Time elapsed:</strong> ${formatTime(
+      totalTime
+    )}</div>
+    <div class="info-tile-change" style="margin-top: 8px;"><strong>Starting count:</strong> ${formatNumber(
+      firstEntry.count
+    )}</div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">24 Hour Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained24Hours)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 24h ago:</strong> ${formatNumber(subs24HoursAgo)}
     </div>
-    <div class="info-tile">
-      <div class="info-tile-header">24 Hour Gain</div>
-      <div class="info-tile-value">${formatNumber(recentGained)}</div>
-      <div class="info-tile-change">
-        <strong>Subscribers 24h ago:</strong> ${formatNumber(subs24HoursAgo)}
-      </div>
-    </div>
-    <div class="info-tile">
-      <div class="info-tile-header">30 Day Gain</div>
-      <div class="info-tile-value">${formatNumber(
-        totalSubscribersGained30Days
-      )}</div>
-      <div class="info-tile-change"><strong>Subscribers 30d ago:</strong> ${formatNumber(
-        apiData.monthlyStats.firstUpdatedCount
-      )}</div>
-      <div class="info-tile-change"><strong>Average daily gain:</strong> ${formatNumber(
-        totalSubscribersGained30Days / 30,
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average hourly gain:</strong> ${formatNumber(
+        recentGained24Hours / 24,
         0
       )}
-      </div>
     </div>
-    <div class="info-tile">
-      <div class="info-tile-header">2025 Gain</div>
-      <div class="info-tile-value">${formatNumber(totalGained)}</div>
-      <div class="info-tile-change"><strong>Over the last</strong> ${formatTime(
-        totalTime
-      )}</div>
-      <div class="info-tile-change"><strong>Starting count:</strong> ${formatNumber(
-        firstEntry.count
-      )}</div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">7 Day Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained7Days)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 7d ago:</strong> ${formatNumber(subs7DaysAgo)}
     </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average daily gain:</strong> ${formatNumber(
+        recentGained7Days / 7,
+        0
+      )}
+    </div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">30 Day Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained30Days)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 30d ago:</strong> ${formatNumber(subs30DaysAgo)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average daily gain:</strong> ${formatNumber(
+        recentGained30Days / 30,
+        0
+      )}
+    </div>
+  </div>
+  <div class="info-tile"> 
+    <div class="info-tile-header">365 Day Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained365Days)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 365d ago:</strong> ${formatNumber(subs365DaysAgo)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average daily gain:</strong> ${formatNumber(
+        recentGained365Days / 365,
+        0
+      )}
+    </div>
+  </div>
   `;
 
         const statsData = {
           timestamp: new Date().toISOString(),
           stats: {
             subscriberCount: lastEntry.count,
-            gain24Hours: recentGained,
-            gain30Days: totalSubscribersGained30Days,
+            gain24Hours: recentGained24Hours,
+            gain7Days: recentGained7Days,
+            gain30Days: recentGained30Days,
+            gain365Days: recentGained365Days,
             totalGain: totalGained,
           },
         };
@@ -1818,9 +1993,9 @@
         const year = easternDate.getFullYear();
 
         let dstStart = new Date(year, 2, 14, 2, 0, 0);
-        dstStart.setDate(14 - dstStart.getDay()); 
+        dstStart.setDate(14 - dstStart.getDay());
 
-        let dstEnd = new Date(year, 10, 7, 2, 0, 0); 
+        let dstEnd = new Date(year, 10, 7, 2, 0, 0);
         dstEnd.setDate(7 - dstEnd.getDay());
 
         return easternDate >= dstStart && easternDate < dstEnd;
