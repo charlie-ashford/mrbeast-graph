@@ -1034,34 +1034,29 @@
           return `${days}d, ${hours}h, ${minutes}m, ${seconds}s`;
         };
 
-        const response = await fetch(
-          'https://api.communitrics.com/mrbeaststats'
-        );
-        const apiData = await response.json();
-        const totalSubscribersGained30Days =
-          apiData.monthlyStats.totalSubscribersGained;
-
         const infoDiv = document.getElementById('info');
         infoDiv.innerHTML = `
   <div class="info-tile">
     <div class="info-tile-header">Subscriber Count</div>
     <div class="info-tile-value">${formatNumber(lastEntry.count)}</div>
-    <div class="info-tile-change"><strong>Latest update:</strong> ${formatDateTime(
-      lastEntry.currentTime
-    )}</div>
-<div class="info-tile-change" style="margin-top: 8px;"><strong>Gained today:</strong> ${formatNumber(
-          calculateGainedToday(filteredData)
-        )} subscribers</div>
+    <div class="info-tile-change">
+      <strong>Latest update:</strong> ${formatDateTime(lastEntry.currentTime)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Gained today:</strong> ${formatNumber(
+        calculateGainedToday(filteredData)
+      )} subscribers
+    </div>
   </div>
   <div class="info-tile">
     <div class="info-tile-header">2025 Growth</div>
     <div class="info-tile-value">${formatNumber(totalGained)}</div>
-    <div class="info-tile-change"><strong>Time elapsed:</strong> ${formatTime(
-      totalTime
-    )}</div>
-    <div class="info-tile-change" style="margin-top: 8px;"><strong>Starting count:</strong> ${formatNumber(
-      firstEntry.count
-    )}</div>
+    <div class="info-tile-change">
+      <strong>Time elapsed:</strong> ${formatTime(totalTime)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Starting count:</strong> ${formatNumber(firstEntry.count)}
+    </div>
   </div>
   <div class="info-tile">
     <div class="info-tile-header">24 Hour Growth</div>
@@ -1102,7 +1097,7 @@
       )}
     </div>
   </div>
-  <div class="info-tile"> 
+  <div class="info-tile">
     <div class="info-tile-header">365 Day Growth</div>
     <div class="info-tile-value">${formatNumber(recentGained365Days)}</div>
     <div class="info-tile-change">
@@ -1115,8 +1110,7 @@
       )}
     </div>
   </div>
-  `;
-
+`;
         const statsData = {
           timestamp: new Date().toISOString(),
           stats: {
