@@ -14,6 +14,39 @@ window.addEventListener('scroll', () => {
   lastScrollTop = scrollTop;
 });
 
+function calculateGainedToday(data) {
+  const now = new Date();
+  const easternTime = new Date(
+    now.toLocaleString('en-US', { timeZone: 'America/New_York' })
+  );
+
+  const startOfDayEastern = new Date(easternTime);
+  startOfDayEastern.setHours(0, 0, 0, 0);
+
+  let startOfDayCount = null;
+  let closestTimeDiff = Infinity;
+
+  for (const entry of data) {
+    const entryTime = new Date(entry.currentTime);
+    const entryTimeEastern = new Date(
+      entryTime.toLocaleString('en-US', { timeZone: 'America/New_York' })
+    );
+    const timeDiff = Math.abs(entryTimeEastern - startOfDayEastern);
+
+    if (timeDiff < closestTimeDiff && entryTimeEastern <= startOfDayEastern) {
+      closestTimeDiff = timeDiff;
+      startOfDayCount = entry.count;
+    }
+  }
+
+  if (startOfDayCount === null && data.length > 0) {
+    startOfDayCount = data[0].count;
+  }
+
+  const latestCount = data.length > 0 ? data[data.length - 1].count : 0;
+  return latestCount - startOfDayCount;
+}
+
 async function updateInfoSection(filteredData) {
   const formatNumber = (num, decimalPlaces = 0) =>
     num.toLocaleString(undefined, {
@@ -46,23 +79,69 @@ async function updateInfoSection(filteredData) {
   const totalTime =
     new Date(lastEntry.currentTime).getTime() -
     new Date(firstEntry.currentTime).getTime();
-  const daysElapsed = totalTime / (1000 * 3600 * 24);
 
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const recentData = filteredData.filter(
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+  const recentData24Hours = filteredData.filter(
     entry => new Date(entry.currentTime) >= oneDayAgo
   );
+  const recentData7Days = filteredData.filter(
+    entry => new Date(entry.currentTime) >= sevenDaysAgo
+  );
+  const recentData30Days = filteredData.filter(
+    entry => new Date(entry.currentTime) >= thirtyDaysAgo
+  );
+  const recentData365Days = filteredData.filter(
+    entry => new Date(entry.currentTime) >= oneYearAgo
+  );
 
-  const recentGained =
-    recentData.length > 1
-      ? recentData[recentData.length - 1].count - recentData[0].count
+  const recentGained24Hours =
+    recentData24Hours.length > 1
+      ? recentData24Hours[recentData24Hours.length - 1].count -
+        recentData24Hours[0].count
+      : 0;
+
+  const recentGained7Days =
+    recentData7Days.length > 1
+      ? recentData7Days[recentData7Days.length - 1].count -
+        recentData7Days[0].count
+      : 0;
+
+  const recentGained365Days =
+    recentData365Days.length > 1
+      ? recentData365Days[recentData365Days.length - 1].count -
+        recentData365Days[0].count
+      : 0;
+
+  const recentGained30Days =
+    recentData30Days.length > 1
+      ? recentData30Days[recentData30Days.length - 1].count -
+        recentData30Days[0].count
       : 0;
 
   const subs24HoursAgo =
-    recentData.length > 0
-      ? recentData[0].count
-      : lastEntry.count - recentGained;
+    recentData24Hours.length > 0
+      ? recentData24Hours[0].count
+      : lastEntry.count - recentGained24Hours;
+
+  const subs7DaysAgo =
+    recentData7Days.length > 0
+      ? recentData7Days[0].count
+      : lastEntry.count - recentGained7Days;
+
+  const subs30DaysAgo =
+    recentData30Days.length > 0
+      ? recentData30Days[0].count
+      : lastEntry.count - recentGained30Days;
+
+  const subs365DaysAgo =
+    recentData365Days.length > 0
+      ? recentData365Days[0].count
+      : lastEntry.count - recentGained365Days;
 
   const formatTime = ms => {
     const days = Math.floor(ms / (1000 * 60 * 60 * 24));
@@ -72,83 +151,83 @@ async function updateInfoSection(filteredData) {
     return `${days}d, ${hours}h, ${minutes}m, ${seconds}s`;
   };
 
-  const response = await fetch('https://api.communitrics.com/mrbeaststats');
-  const apiData = await response.json();
-  const totalSubscribersGained30Days =
-    apiData.monthlyStats.totalSubscribersGained;
-
   const infoDiv = document.getElementById('info');
   infoDiv.innerHTML = `
-    <div class="info-tile">
-      <div class="info-tile-header">Current Subscriber Count</div>
-      <div class="info-tile-value">${formatNumber(lastEntry.count)}</div>
-      <div class="info-tile-change"><strong>Latest update:</strong> ${formatDateTime(
-        lastEntry.currentTime
-      )}</div>
+  <div class="info-tile">
+    <div class="info-tile-header">Subscriber Count</div>
+    <div class="info-tile-value">${formatNumber(lastEntry.count)}</div>
+    <div class="info-tile-change">
+      <strong>Latest update:</strong> ${formatDateTime(lastEntry.currentTime)}
     </div>
-    <div class="info-tile">
-      <div class="info-tile-header">24 Hour Gain</div>
-      <div class="info-tile-value">${formatNumber(recentGained)}</div>
-      <div class="info-tile-change">
-        <strong>Subscribers 24h ago:</strong> ${formatNumber(subs24HoursAgo)}
-      </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Gained today:</strong> ${formatNumber(
+        calculateGainedToday(filteredData)
+      )} subscribers
     </div>
-    <div class="info-tile">
-      <div class="info-tile-header">30 Day Gain</div>
-      <div class="info-tile-value">${formatNumber(
-        totalSubscribersGained30Days
-      )}</div>
-      <div class="info-tile-change"><strong>Subscribers 30d ago:</strong> ${formatNumber(
-        apiData.monthlyStats.firstUpdatedCount
-      )}</div>
-      <div class="info-tile-change"><strong>Average daily gain:</strong> ${formatNumber(
-        totalSubscribersGained30Days / 30,
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">2025 Growth</div>
+    <div class="info-tile-value">${formatNumber(totalGained)}</div>
+    <div class="info-tile-change">
+      <strong>Time elapsed:</strong> ${formatTime(totalTime)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Starting count:</strong> ${formatNumber(firstEntry.count)}
+    </div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">24 Hour Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained24Hours)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 24h ago:</strong> ${formatNumber(subs24HoursAgo)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average hourly gain:</strong> ${formatNumber(
+        recentGained24Hours / 24,
         0
       )}
-      </div>
     </div>
-    <div class="info-tile">
-      <div class="info-tile-header">2025 Gain</div>
-      <div class="info-tile-value">${formatNumber(totalGained)}</div>
-      <div class="info-tile-change"><strong>Over the last</strong> ${formatTime(
-        totalTime
-      )}</div>
-      <div class="info-tile-change"><strong>Starting count:</strong> ${formatNumber(
-        firstEntry.count
-      )}</div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">7 Day Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained7Days)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 7d ago:</strong> ${formatNumber(subs7DaysAgo)}
     </div>
-  `;
-
-  const statsData = {
-    timestamp: new Date().toISOString(),
-    stats: {
-      subscriberCount: lastEntry.count,
-      gain24Hours: recentGained,
-      gain30Days: totalSubscribersGained30Days,
-      totalGain: totalGained,
-    },
-  };
-
-  try {
-    const saveResponse = await fetch(
-      'https://api.communitrics.com/statistics',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(statsData),
-      }
-    );
-
-    if (!saveResponse.ok) {
-      throw new Error(`Error: ${saveResponse.statusText}`);
-    }
-
-    console.log('Statistics saved successfully:', await saveResponse.json());
-  } catch (error) {
-    console.error('Error saving statistics:', error);
-  }
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average daily gain:</strong> ${formatNumber(
+        recentGained7Days / 7,
+        0
+      )}
+    </div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">30 Day Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained30Days)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 30d ago:</strong> ${formatNumber(subs30DaysAgo)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average daily gain:</strong> ${formatNumber(
+        recentGained30Days / 30,
+        0
+      )}
+    </div>
+  </div>
+  <div class="info-tile">
+    <div class="info-tile-header">365 Day Growth</div>
+    <div class="info-tile-value">${formatNumber(recentGained365Days)}</div>
+    <div class="info-tile-change">
+      <strong>Subscribers 365d ago:</strong> ${formatNumber(subs365DaysAgo)}
+    </div>
+    <div class="info-tile-change" style="margin-top: 8px;">
+      <strong>Average daily gain:</strong> ${formatNumber(
+        recentGained365Days / 365,
+        0
+      )}
+    </div>
+  </div>
+`;
 }
 
 function formatTime(ms) {
@@ -198,17 +277,17 @@ function drawChart(mrbeastData) {
       resetZoomButton: {
         theme: {
           fill: '#2A2A2A',
-          stroke: '#2DD4FF',
+          stroke: '#5ecfe8',
           r: 5,
           style: {
             fontFamily: 'Poppins, sans-serif',
-            color: '#2DD4FF',
+            color: '#5ecfe8',
             fontSize: '12px',
             fontWeight: 'bold',
           },
           states: {
             hover: {
-              fill: '#2DD4FF',
+              fill: '#5ecfe8',
               style: {
                 color: '#232323',
               },
@@ -301,8 +380,8 @@ function drawChart(mrbeastData) {
               y2: 1,
             },
             stops: [
-              [0, 'rgba(45, 212, 255, 0.75)'],
-              [1, 'rgba(45, 212, 255, 0.25)'],
+              [0, 'rgba(31, 185, 219, 0.75)'],
+              [1, 'rgba(31, 185, 219, 0.25)'],
             ],
           },
         },
@@ -314,7 +393,7 @@ function drawChart(mrbeastData) {
       shared: true,
       crosshairs: false,
       backgroundColor: 'rgba(0, 0, 0, 0.85)',
-      borderColor: '#2DD4FF',
+      borderColor: '#5ecfe8',
       borderRadius: 8,
       style: {
         fontFamily: 'Poppins, sans-serif',
@@ -332,7 +411,7 @@ function drawChart(mrbeastData) {
       {
         name: 'MrBeast',
         data: mrbeastData,
-        color: '#2DD4FF',
+        color: '#5ecfe8',
         fillColor: {
           linearGradient: {
             x1: 0,
@@ -341,8 +420,8 @@ function drawChart(mrbeastData) {
             y2: 1,
           },
           stops: [
-            [0, 'rgba(45, 212, 255, 0.75)'],
-            [1, 'rgba(45, 212, 255, 0.25)'],
+            [0, 'rgba(31, 185, 219, 0.75)'],
+            [1, 'rgba(31, 185, 219, 0.25)'],
           ],
         },
       },
@@ -360,13 +439,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   dropdownButton.addEventListener('click', function () {
     dropdownContent.classList.toggle('show');
+    dropdownButton.classList.toggle(
+      'active',
+      dropdownContent.classList.contains('show')
+    );
   });
+
   window.addEventListener('click', function (e) {
     if (
       !dropdownButton.contains(e.target) &&
       !dropdownContent.contains(e.target)
     ) {
       dropdownContent.classList.remove('show');
+      dropdownButton.classList.remove('active');
     }
   });
 
@@ -376,6 +461,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     hoverTimeout = setTimeout(() => {
       if (!dropdownContent.classList.contains('show')) {
         dropdownContent.classList.add('show');
+        dropdownButton.classList.add('active');
         autoOpened = true;
       }
     }, 400);
@@ -388,6 +474,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     if (autoOpened) {
       dropdownContent.classList.remove('show');
+      dropdownButton.classList.remove('active');
       autoOpened = false;
     }
   });
@@ -412,34 +499,69 @@ document.addEventListener('DOMContentLoaded', async function () {
       popup = document.createElement('div');
       popup.id = 'popup';
       popup.innerHTML = `
-              <i class="fas fa-download" style="font-size: 3rem; color: #20b2cf; margin-bottom: 20px;"></i>
-              <h2>Download in Progress</h2>
-              <p style="font-size: 1.2rem; line-height: 1.6; margin-bottom: 20px;">
-                Processing download. This may take a while, as it is filtering a lot of data.
-              </p>
-              <p style="font-size: 1rem; color: #cccccc;">
-                All CSV files are in UTC unless otherwise stated.
-              </p>
-            `;
+  <i class="fas fa-download" style="font-size: 3rem; color: #1fb8db; margin-bottom: 20px;"></i>
+  <h2>Download in Progress</h2>
+  <p style="font-size: 1.2rem; line-height: 1.6; margin-bottom: 20px;">
+    Processing download. This may take a while, as it is filtering a lot of data.
+  </p>
+  <p style="font-size: 1rem; color: #cccccc;">
+    All CSV files are in UTC unless otherwise stated.
+  </p>
+  <button id="cancelDownload" class="cancel-button">
+    <i class="fas fa-times"></i> Cancel Download
+  </button>
+`;
       document.body.appendChild(popup);
     }
 
     overlay.style.display = 'block';
     popup.style.display = 'block';
 
-    try {
-      const csvData = convertDataToCSV(await fetchData(url), type);
-      downloadCSVFile(csvData, filename);
-    } catch (error) {
-      console.error('Failed to download CSV:', error);
-    } finally {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    document.getElementById('cancelDownload').onclick = () => {
+      controller.abort();
       overlay.style.display = 'none';
       popup.style.display = 'none';
-
       buttons.forEach(button => {
         button.disabled = false;
         button.style.cursor = '';
       });
+    };
+
+    try {
+      const csvData = convertDataToCSV(await fetchData(url, signal), type);
+      downloadCSVFile(csvData, filename);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Download cancelled by user');
+      } else {
+        console.error('Failed to download CSV:', error);
+      }
+    } finally {
+      overlay.style.display = 'none';
+      popup.style.display = 'none';
+      buttons.forEach(button => {
+        button.disabled = false;
+        button.style.cursor = '';
+      });
+    }
+  }
+
+  async function fetchData(url, signal) {
+    try {
+      let response = await fetch(url, { signal });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return await response.json();
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw error;
+      }
+      console.error('Failed to fetch data:', error);
+      throw error;
     }
   }
 
@@ -460,6 +582,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         'https://api.communitrics.com/mrbeast?minutelyPastWeek=true',
         'MrBeast_Minutely_Subscribers_(Past_Week).csv',
         'minutelyPastWeek'
+      );
+    });
+
+  document
+    .getElementById('downloadMinutelyDayData')
+    .addEventListener('click', function () {
+      handleCsvDownload(
+        'https://api.communitrics.com/mrbeast?minutelyPastDay=true',
+        'MrBeast_Minutely_Subscribers_(Past_Day).csv',
+        'minutelyPastDay'
       );
     });
 
@@ -515,10 +647,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         mainContent.style.display = 'block';
         tableContent.style.display = 'none';
         button.innerHTML = '<i class="fas fa-table"></i> View Data Tables';
+        button.classList.remove('active'); 
       } else {
         mainContent.style.display = 'none';
         tableContent.style.display = 'flex';
         button.innerHTML = '<i class="fas fa-chart-line"></i> View Graph';
+        button.classList.remove('active'); 
       }
     });
 
@@ -550,8 +684,8 @@ async function fetchDataAndDrawChart() {
     ]);
 
     filteredMrbeastData =
-      allMrbeastData.length > 3599
-        ? allMrbeastData.slice(-3599)
+      allMrbeastData.length > 3000
+        ? allMrbeastData.slice(-3000)
         : allMrbeastData;
 
     updateInfoSection(data);
@@ -847,28 +981,6 @@ function fillDailyTable(data) {
     const subscriberCell = document.createElement('td');
     const gainCell = document.createElement('td');
 
-    const localTimeFormatter = new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    });
-
-    const utcTimeFormatter = new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'UTC',
-    });
-
-    const edtTimeFormatter = new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/New_York',
-    });
-
-    const localTime = new Date(
-      currentDate.getTime() + currentDate.getTimezoneOffset() * 60000
-    );
-    const utcTime = new Date(utcCurrentDate);
     const edtTime = new Date(
       currentDate.getTime() +
         (currentDate.getTimezoneOffset() + (isDST ? 240 : 300)) * 60000
@@ -945,15 +1057,6 @@ function fillDailyTable(data) {
     timeZone: 'America/New_York',
   });
 
-  const edtNowDateString = now.toLocaleString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'America/New_York',
-  });
-
   if (mostRecentRow) {
     const gainCell = mostRecentRow.getElementsByTagName('td')[2];
     gainCell.innerHTML += `<br><span style="font-size: calc(0.9em - 15%);">As of ${edtTimeFormatter.format(
@@ -986,6 +1089,8 @@ function convertDataToCSV(data, type = 'minutely') {
     type === 'minutely'
       ? 'Minutely Gains'
       : type === 'minutelyPastWeek'
+      ? 'Minutely Gains'
+      : type === 'minutelyPastDay'
       ? 'Minutely Gains'
       : type === 'tenminutely'
       ? '10 Minutely Gains'
@@ -1056,6 +1161,8 @@ function convertDataToCSV(data, type = 'minutely') {
     type === 'minutely'
       ? 60 * 1000
       : type === 'minutelyPastWeek'
+      ? 60 * 1000
+      : type === 'minutelyPastDay'
       ? 60 * 1000
       : type === 'tenminutely'
       ? 10 * 60 * 1000

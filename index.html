@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MrBeast Subscriber Count Graph</title>
+    <meta
+      name="keywords"
+      content="MrBeast, subscriber count, live count, graph, subscribers, realtime, ViewStats, YouTube statistics, MrBeast graph"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "MrBeast Subscriber Count Graph",
+        "description": "See MrBeast's realtime subscriber count graph and historical data powered by Viewstats.",
+        "url": "https://www.mrbeastgraph.com"
+      }
+    </script>
     <script src="https://code.highcharts.com/12.1/highcharts.js"></script>
     <script src="https://code.highcharts.com/12.1/modules/boost.js"></script>
     <script src="https://code.highcharts.com/12.1/modules/accessibility.js"></script>
@@ -20,12 +33,12 @@
     />
     <link
       rel="icon"
-      href="https://api.communitrics.com/youtube/profile?channel=@mrbeast"
+      href="https://www.banner.yt/UCX6OQ3DkcsbYNE6H8uQQuVA/avatar"
       type="image/png"
     />
     <link
       rel="apple-touch-icon"
-      href="https://api.communitrics.com/youtube/profile?channel=@mrbeast"
+      href="https://www.banner.yt/UCX6OQ3DkcsbYNE6H8uQQuVA/avatar"
     />
     <link rel="canonical" href="https://www.mrbeastgraph.com" />
     <link rel="stylesheet" href="styles.css" />
@@ -33,12 +46,14 @@
       name="description"
       content="See MrBeast's realtime subscriber count, powered by Viewstats"
     />
-    <meta name="theme-color" content="#60a5fa" />
+    <meta name="theme-color" content="#1fbadc" />
     <meta property="og:title" content="MrBeast Subscriber Count Graph" />
     <meta
       property="og:description"
       content="See MrBeast's realtime subscriber count, powered by Viewstats"
     />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="MrBeast Subscriber Count Graph" />
     <meta property="og:url" content="https://www.mrbeastgraph.com" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -71,7 +86,7 @@
         class="spinner"
         style="
           border: 12px solid #f3f3f3;
-          border-top: 12px solid #2dd4ff;
+          border-top: 12px solid #5ecfe8;
           border-radius: 50%;
           width: 70px;
           height: 70px;
@@ -106,6 +121,10 @@
           <button id="downloadMinutelyWeekData">
             Minutely Data <br />
             (Past Week)
+          </button>
+          <button id="downloadMinutelyDayData">
+            Minutely Data <br />
+            (Past Day)
           </button>
           <button id="downloadTenMinutelyData">10 Minutely Data</button>
           <button id="downloadHourlyData">Hourly Data</button>
