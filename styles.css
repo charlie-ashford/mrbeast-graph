@@ -48,7 +48,7 @@ h1 {
   margin: 2rem 0 -0.5rem;
   font-size: 2rem;
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 8px rgba(0, 188, 231, 0.15);
+  text-shadow: 0 2px 8px rgba(0, 188, 231, 0.1);
 }
 
 h2 {
@@ -74,7 +74,7 @@ h2 {
 }
 
 .info-tile {
-  background-color: rgba(20, 20, 20, 0.95);
+  background-color: #141414;
   border-radius: 24px;
   padding: 34px;
   position: relative;
@@ -217,7 +217,7 @@ h2 {
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(0, 188, 231, 0.4);
+    box-shadow: 0 0 0 0 rgba(0, 188, 231, 0.3);
   }
 
   70% {
@@ -267,9 +267,9 @@ h2 {
 
 .button-container button.active,
 .button-container button:hover {
-  background-color: #5ecfe8;
-  color: #1e1e1e;
-  box-shadow: 0 0 0 3px rgba(0, 188, 231, 0.25),
+  background-color: #4dd0ee;
+  color: #1e1e1e; 
+  box-shadow: 0 0 0 3px rgba(0, 188, 231, 0.3),
     0 4px 16px rgba(0, 188, 231, 0.1);
   transform: scale(1.02);
 }
@@ -294,9 +294,9 @@ h2 {
 }
 
 .button-container button:hover {
-  background-color: #5ecfe8;
+  background-color: #4dd0ee;
   color: #1e1e1e;
-  box-shadow: 0 0 0 3px rgba(0, 188, 231, 0.25),
+  box-shadow: 0 0 0 3px rgba(0, 188, 231, 0.3),
     0 4px 16px rgba(0, 188, 231, 0.1);
   transform: scale(1.02);
 }
@@ -324,7 +324,7 @@ h2 {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #1e1e1e;
-  box-shadow: 0 4px 24px rgba(0, 188, 231, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 188, 231, 0.1);
 }
 
 .dropdown-content button {
@@ -343,7 +343,7 @@ h2 {
 
 .dropdown-content button:hover {
   background-color: #2a2a2a;
-  color: #5ecfe8;
+  color: #4dd0ee;
   border-left: 3px solid #00bce7;
   padding-left: 13px;
   transform: scale(1.01);
@@ -605,14 +605,14 @@ textarea:focus,
 select:focus {
   outline: 3px solid #00bce7 !important;
   outline-offset: 2px;
-  box-shadow: 0 0 8px rgba(0, 188, 231, 0.75);
+  box-shadow: 0 0 8px rgba(0, 188, 231, 0.7);
   border-radius: 6px;
 }
 
 :focus-visible {
   outline: 3px solid #00bce7;
   outline-offset: 3px;
-  box-shadow: 0 0 0 5px rgba(0, 188, 231, 0.2);
+  box-shadow: 0 0 0 5px rgba(0, 188, 231, 0.3);
   border-radius: 4px;
 }
 

@@ -380,8 +380,8 @@ function drawChart(mrbeastData) {
               y2: 1,
             },
             stops: [
-              [0, 'rgba(0, 188, 231, 0.75)'],
-              [1, 'rgba(0, 188, 231, 0.25)'],
+              [0, 'rgba(0, 188, 231, 0.7)'],
+              [1, 'rgba(0, 188, 231, 0.3)'],
             ],
           },
         },
@@ -392,7 +392,7 @@ function drawChart(mrbeastData) {
       animation: false,
       shared: true,
       crosshairs: false,
-      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
       borderColor: '#00bce7',
       borderRadius: 8,
       style: {
@@ -420,8 +420,8 @@ function drawChart(mrbeastData) {
             y2: 1,
           },
           stops: [
-            [0, 'rgba(0, 188, 231, 0.75)'],
-            [1, 'rgba(0, 188, 231, 0.25)'],
+            [0, 'rgba(0, 188, 231, 0.7)'],
+            [1, 'rgba(0, 188, 231, 0.3)'],
           ],
         },
       },
