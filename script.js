@@ -260,14 +260,14 @@ function drawChart(mrbeastData) {
       backgroundColor: {
         linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
         stops: [
-          [0, '#1E1E1E'],
-          [1, '#1E1E1E'],
+          [0, '#1e1e1e'],
+          [1, '#1e1e1e'],
         ],
       },
       borderRadius: 10,
       style: {
         fontFamily: 'Poppins, sans-serif',
-        color: '#1E1E1E',
+        color: '#1e1e1e',
       },
       events: {
         dblclick: function () {
@@ -276,20 +276,20 @@ function drawChart(mrbeastData) {
       },
       resetZoomButton: {
         theme: {
-          fill: '#2A2A2A',
-          stroke: '#5ecfe8',
+          fill: '#1e1e1e',
+          stroke: '#00bce7',
           r: 5,
           style: {
             fontFamily: 'Poppins, sans-serif',
-            color: '#5ecfe8',
+            color: '#00bce7',
             fontSize: '12px',
             fontWeight: 'bold',
           },
           states: {
             hover: {
-              fill: '#5ecfe8',
+              fill: '#00bce7',
               style: {
-                color: '#232323',
+                color: '#1e1e1e',
               },
             },
           },
@@ -307,7 +307,7 @@ function drawChart(mrbeastData) {
       text: 'MrBeast Subscriber Count',
       style: {
         fontFamily: 'Poppins, sans-serif',
-        color: '#FFFFFF',
+        color: '#e0e0e0',
         fontSize: '20px',
         fontWeight: '600',
       },
@@ -318,14 +318,14 @@ function drawChart(mrbeastData) {
         text: 'Time (US Eastern)',
         style: {
           fontFamily: 'Poppins, sans-serif',
-          color: '#E0E0E0',
+          color: '#e0e0e0',
           fontWeight: 'bold',
         },
       },
       labels: {
         style: {
           fontFamily: 'Poppins, sans-serif',
-          color: '#E0E0E0',
+          color: '#e0e0e0',
           fontSize: '12px',
         },
         format: '{value:%H:%M:%S}',
@@ -348,14 +348,14 @@ function drawChart(mrbeastData) {
         text: 'Subscribers',
         style: {
           fontFamily: 'Poppins, sans-serif',
-          color: '#E0E0E0',
+          color: '#e0e0e0',
           fontWeight: 'bold',
         },
       },
       labels: {
         style: {
           fontFamily: 'Poppins, sans-serif',
-          color: '#E0E0E0',
+          color: '#e0e0e0',
           fontSize: '12px',
         },
       },
@@ -380,8 +380,8 @@ function drawChart(mrbeastData) {
               y2: 1,
             },
             stops: [
-              [0, 'rgba(31, 185, 219, 0.75)'],
-              [1, 'rgba(31, 185, 219, 0.25)'],
+              [0, 'rgba(0, 188, 231, 0.75)'],
+              [1, 'rgba(0, 188, 231, 0.25)'],
             ],
           },
         },
@@ -393,11 +393,11 @@ function drawChart(mrbeastData) {
       shared: true,
       crosshairs: false,
       backgroundColor: 'rgba(0, 0, 0, 0.85)',
-      borderColor: '#5ecfe8',
+      borderColor: '#00bce7',
       borderRadius: 8,
       style: {
         fontFamily: 'Poppins, sans-serif',
-        color: '#E0E0E0',
+        color: '#e0e0e0',
         fontSize: '14px',
       },
       formatter: function () {
@@ -411,7 +411,7 @@ function drawChart(mrbeastData) {
       {
         name: 'MrBeast',
         data: mrbeastData,
-        color: '#5ecfe8',
+        color: '#00bce7',
         fillColor: {
           linearGradient: {
             x1: 0,
@@ -420,8 +420,8 @@ function drawChart(mrbeastData) {
             y2: 1,
           },
           stops: [
-            [0, 'rgba(31, 185, 219, 0.75)'],
-            [1, 'rgba(31, 185, 219, 0.25)'],
+            [0, 'rgba(0, 188, 231, 0.75)'],
+            [1, 'rgba(0, 188, 231, 0.25)'],
           ],
         },
       },
@@ -499,12 +499,12 @@ document.addEventListener('DOMContentLoaded', async function () {
       popup = document.createElement('div');
       popup.id = 'popup';
       popup.innerHTML = `
-  <i class="fas fa-download" style="font-size: 3rem; color: #1fb8db; margin-bottom: 20px;"></i>
+  <i class="fas fa-download" style="font-size: 3rem; color: #00bce7; margin-bottom: 20px;"></i>
   <h2>Download in Progress</h2>
   <p style="font-size: 1.2rem; line-height: 1.6; margin-bottom: 20px;">
     Processing download. This may take a while, as it is filtering a lot of data.
   </p>
-  <p style="font-size: 1rem; color: #cccccc;">
+  <p style="font-size: 1rem; color: #e0e0e0;">
     All CSV files are in UTC unless otherwise stated.
   </p>
   <button id="cancelDownload" class="cancel-button">
@@ -796,7 +796,7 @@ function fillHourlyTable(data, selectedDate) {
         previousCount !== null ? previousCount.toLocaleString() : '-';
       if (previousGain !== null) {
         let gainChange = previousGainChange;
-        let color = previousGainChange > 0 ? 'lime' : 'red';
+        let color = previousGainChange > 0 ? '#5bdb1f' : '#db421f';
         gainCell.innerHTML = `<span style="color: ${color}; font-weight: bold;">${previousGain.toLocaleString()}</span>`;
         gainCell.innerHTML += `<br><span style="font-size: smaller;">(${
           gainChange > 0 ? '+' : ''
@@ -826,11 +826,11 @@ function fillHourlyTable(data, selectedDate) {
         gain = lastHourCount !== null ? currentCount - lastHourCount : null;
         if (gain !== null) {
           gainValue = gain.toLocaleString();
-          let color = 'red';
+          let color = '#db421f';
           if (previousGain !== null && gain < previousGain) {
-            color = 'red';
+            color = '#db421f';
           } else if (gain > 0) {
-            color = 'lime';
+            color = '#5bdb1f';
           }
           gainBuffer.push(
             gain === 0
@@ -1007,11 +1007,11 @@ function fillDailyTable(data) {
 
       if (gain !== null) {
         gainValue = gain.toLocaleString();
-        let color = 'red';
+        let color = '#db421f';
         if (previousGain !== null && gain < previousGain) {
-          color = 'red';
+          color = '#db421f';
         } else if (gain > 0) {
-          color = 'lime';
+          color = '#5bdb1f';
         }
         gainCell.innerHTML =
           gain === 0
@@ -1029,7 +1029,7 @@ function fillDailyTable(data) {
     } else if (previousCount === null && closestEndEntry && closestStartEntry) {
       gain = closestEndEntry.count - closestStartEntry.count;
       gainValue = gain.toLocaleString();
-      gainCell.innerHTML = `<span style="color: lime; font-weight: bold;">${gainValue}</span><br><span style="font-size: calc(0.9em - 15%);"> (Data started May 15th, <br>at 12:52pm US Eastern)</span>`;
+      gainCell.innerHTML = `<span style="color: #5bdb1f; font-weight: bold;">${gainValue}</span><br><span style="font-size: calc(0.9em - 15%);"> (Data started May 15th, <br>at 12:52pm US Eastern)</span>`;
       previousGain = gain;
     } else {
       gainCell.textContent = '-';
