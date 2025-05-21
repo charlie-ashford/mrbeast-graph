@@ -796,7 +796,7 @@ function fillHourlyTable(data, selectedDate) {
         previousCount !== null ? previousCount.toLocaleString() : '-';
       if (previousGain !== null) {
         let gainChange = previousGainChange;
-        let color = previousGainChange > 0 ? '#5bdb1f' : '#db421f';
+        let color = previousGainChange > 0 ? '#49e700' : '#e72b00';
         gainCell.innerHTML = `<span style="color: ${color}; font-weight: bold;">${previousGain.toLocaleString()}</span>`;
         gainCell.innerHTML += `<br><span style="font-size: smaller;">(${
           gainChange > 0 ? '+' : ''
@@ -826,11 +826,11 @@ function fillHourlyTable(data, selectedDate) {
         gain = lastHourCount !== null ? currentCount - lastHourCount : null;
         if (gain !== null) {
           gainValue = gain.toLocaleString();
-          let color = '#db421f';
+          let color = '#e72b00';
           if (previousGain !== null && gain < previousGain) {
-            color = '#db421f';
+            color = '#e72b00';
           } else if (gain > 0) {
-            color = '#5bdb1f';
+            color = '#49e700';
           }
           gainBuffer.push(
             gain === 0
@@ -1007,11 +1007,11 @@ function fillDailyTable(data) {
 
       if (gain !== null) {
         gainValue = gain.toLocaleString();
-        let color = '#db421f';
+        let color = '#e72b00';
         if (previousGain !== null && gain < previousGain) {
-          color = '#db421f';
+          color = '#e72b00';
         } else if (gain > 0) {
-          color = '#5bdb1f';
+          color = '#49e700';
         }
         gainCell.innerHTML =
           gain === 0
@@ -1029,7 +1029,7 @@ function fillDailyTable(data) {
     } else if (previousCount === null && closestEndEntry && closestStartEntry) {
       gain = closestEndEntry.count - closestStartEntry.count;
       gainValue = gain.toLocaleString();
-      gainCell.innerHTML = `<span style="color: #5bdb1f; font-weight: bold;">${gainValue}</span><br><span style="font-size: calc(0.9em - 15%);"> (Data started May 15th, <br>at 12:52pm US Eastern)</span>`;
+      gainCell.innerHTML = `<span style="color: #49e700; font-weight: bold;">${gainValue}</span><br><span style="font-size: calc(0.9em - 15%);"> (Data started May 15th, <br>at 12:52pm US Eastern)</span>`;
       previousGain = gain;
     } else {
       gainCell.textContent = '-';
