@@ -647,12 +647,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         mainContent.style.display = 'block';
         tableContent.style.display = 'none';
         button.innerHTML = '<i class="fas fa-table"></i> View Data Tables';
-        button.classList.remove('active'); 
+        button.classList.remove('active');
       } else {
         mainContent.style.display = 'none';
         tableContent.style.display = 'flex';
         button.innerHTML = '<i class="fas fa-chart-line"></i> View Graph';
-        button.classList.remove('active'); 
+        button.classList.remove('active');
       }
     });
 

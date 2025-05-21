@@ -70,7 +70,7 @@ h2 {
   margin: 48px auto;
   width: 95%;
   max-width: 95%;
-  padding: 0 1rem; 
+  padding: 0 1rem;
 }
 
 .info-tile {
@@ -268,7 +268,7 @@ h2 {
 .button-container button.active,
 .button-container button:hover {
   background-color: #4dd0ee;
-  color: #1e1e1e; 
+  color: #1e1e1e;
   box-shadow: 0 0 0 3px rgba(0, 188, 231, 0.3),
     0 4px 16px rgba(0, 188, 231, 0.1);
   transform: scale(1.02);
@@ -348,7 +348,7 @@ h2 {
   padding-left: 13px;
   transform: scale(1.01);
   box-shadow: none;
-  border-radius: 0 !important; 
+  border-radius: 0 !important;
 }
 
 .dropdown-content button:not(:last-child) {
