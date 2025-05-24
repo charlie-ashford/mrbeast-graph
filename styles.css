@@ -494,8 +494,27 @@ tr:last-child td {
 
 tbody tr:hover {
   background-color: rgba(0, 188, 231, 0.1);
-  transform: translateX(1px);
   box-shadow: -1px 0 0 #00bce7;
+}
+
+tbody tr {
+  position: relative;
+}
+
+tbody tr:hover td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 2px; 
+  background: #00bce7;
+  border-radius: 2px 0 0 2px;
+  z-index: 1;
+}
+
+tbody td:first-child {
+  position: relative;
 }
 
 #datePicker {
