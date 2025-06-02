@@ -10,8 +10,10 @@ body {
 
 i {
   font-family: 'Font Awesome 6 Free' !important;
-  font-weight: 900;
-  font-size: 80%;
+  font-weight: 900 !important; 
+  font-size: 100% !important; 
+  vertical-align: middle !important;
+  padding-right: 5px !important;
 }
 
 * {
@@ -279,6 +281,7 @@ h2 {
 
 .button-container button.active,
 .button-container button:hover,
+.timeframe-container button.active,
 .timeframe-container button:hover {
   background-color: #4dd0ee;
   color: #1e1e1e;
