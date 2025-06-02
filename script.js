@@ -161,7 +161,7 @@ function initializeTimeframeControls() {
       timeframeControls.classList.remove('show');
       timeframeButton.classList.remove('active');
       timeframeButton.innerHTML =
-        '<i class="fas fa-calendar-alt"></i> Custom Time';
+        '<i class="fas fa-calendar-alt"></i> Change Timeframe';
       timeframeButton.style.backgroundColor = '#00bce7';
     } catch (error) {
       console.error('Error fetching custom timeframe data:', error);
@@ -185,7 +185,7 @@ function initializeTimeframeControls() {
       timeframeControls.classList.remove('show');
       timeframeButton.classList.remove('active');
       timeframeButton.innerHTML =
-        '<i class="fas fa-calendar-alt"></i> Custom Time';
+        '<i class="fas fa-calendar-alt"></i> Change Timeframe';
       timeframeButton.style.backgroundColor = '#00bce7';
     } catch (error) {
       console.error('Error resetting to live data:', error);

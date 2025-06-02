@@ -271,7 +271,7 @@ h2 {
   transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease,
     transform 0.3s ease;
   margin-bottom: 12px;
-  width: 210px;
+  width: 225px;
   text-align: center;
   font-weight: 400;
   transform-origin: center;
@@ -319,7 +319,7 @@ h2 {
   display: none;
   position: absolute;
   background-color: #1e1e1e;
-  min-width: 210px;
+  min-width: 225px;
   z-index: 1;
   border-radius: 12px;
   overflow: hidden;
