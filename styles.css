@@ -11,7 +11,7 @@ body {
 i {
   font-family: 'Font Awesome 6 Free' !important;
   font-weight: 900 !important; 
-  font-size: 100% !important; 
+  font-size: 100%;
   vertical-align: middle !important;
   padding-right: 5px !important;
 }
