@@ -158,8 +158,7 @@ function initializeTimeframeControls() {
 
   pastDayButton.addEventListener('click', async () => {
     pastDayButton.disabled = true;
-    pastDayButton.innerHTML =
-      '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    pastDayButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…';
     try {
       isCustomTimeframe = true;
       timeframeButton.innerHTML =
@@ -170,11 +169,12 @@ function initializeTimeframeControls() {
         'https://api.communitrics.com/mrbeast?minutelyPastDay=true'
       );
 
-      allMrbeastData = data.map(e => [
+      const pastDayChartData = data.map(e => [
         new Date(e.currentTime).getTime(),
         Number(e.count),
       ]);
-      filteredMrbeastData = allMrbeastData;
+      filteredMrbeastData = pastDayChartData;
+
       drawChart(filteredMrbeastData);
       const chart = Highcharts.charts[Highcharts.charts.length - 1];
       if (chart) {
@@ -200,24 +200,21 @@ async function fetchCustomTimeframeData(startDate, endDate) {
   try {
     const startISO = startDate.toISOString();
     const endISO = endDate.toISOString();
-    const url = `https://api.communitrics.com/mrbeast?tenminutely=true&start=${startISO}&end=${endISO}`;
-    let response = await fetch(url);
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    const data = await response.json();
-    if (data.length === 0) {
+    const url =
+      `https://api.communitrics.com/mrbeast?tenminutely=true` +
+      `&start=${startISO}&end=${endISO}`;
+    const data = await fetchData(url);
+    if (!data.length) {
       alert('No data available for the selected timeframe');
       return;
     }
     isCustomTimeframe = true;
     customStartDate = startDate;
     customEndDate = endDate;
-    allMrbeastData = data.map(entry => [
+    filteredMrbeastData = data.map(entry => [
       new Date(entry.currentTime).getTime(),
       Number(entry.count),
     ]);
-    filteredMrbeastData = allMrbeastData;
     drawChart(filteredMrbeastData);
     const chart = Highcharts.charts[Highcharts.charts.length - 1];
     if (chart) {
