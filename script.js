@@ -989,10 +989,10 @@ function convertDataToCSV(data, type = 'minutely') {
 
       if (lastDate) {
         const nextDate = new Date(lastDate);
-        nextDate.setDate(nextDate.getDate() + 1);
-        while (nextDate < estDate) {
+        nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+        while (nextDate.getTime() < estDate.getTime()) {
           csvRows.push([nextDate.toISOString(), '', ''].join(','));
-          nextDate.setDate(nextDate.getDate() + 1);
+          nextDate.setUTCDate(nextDate.getUTCDate() + 1);
         }
       }
 
@@ -1006,7 +1006,7 @@ function convertDataToCSV(data, type = 'minutely') {
       );
 
       lastSelectedSubscribers = subscribers;
-      lastDate = estDate;
+      lastDate = new Date(estDate);
     });
 
     return csvRows.join('\n');
