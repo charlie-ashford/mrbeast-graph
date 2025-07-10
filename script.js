@@ -10,7 +10,6 @@ const timeframeContainer = document.querySelector('.timeframe-container');
 
 window.addEventListener('scroll', () => {
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
   if (scrollTop === 0) {
     buttonContainer.classList.remove('hidden');
     timeframeContainer.classList.remove('hidden');
@@ -58,7 +57,6 @@ function formatDateTimeLocal(date) {
   const day = String(date.getDate()).padStart(2, '0');
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
@@ -78,6 +76,7 @@ function initializeTimeframeControls() {
   const endDateTimeInput = document.getElementById('endDateTime');
   const applyButton = document.getElementById('applyTimeframe');
   const resetButton = document.getElementById('resetTimeframe');
+  const pastDayButton = document.getElementById('pastDayPreset');
 
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -85,7 +84,7 @@ function initializeTimeframeControls() {
   endDateTimeInput.value = formatDateTimeLocalUTC(now);
   startDateTimeInput.value = formatDateTimeLocalUTC(sevenDaysAgo);
 
-  timeframeButton.addEventListener('click', function () {
+  timeframeButton.addEventListener('click', () => {
     timeframeControls.classList.toggle('show');
     timeframeButton.classList.toggle(
       'active',
@@ -93,45 +92,38 @@ function initializeTimeframeControls() {
     );
   });
 
-  document.addEventListener('click', function (e) {
+  document.addEventListener('pointerdown', e => {
     if (
-      !timeframeButton.contains(e.target) &&
-      !timeframeControls.contains(e.target)
+      !e.target.closest(
+        '#timeframeButton, #timeframeControls, #startDateTime, #endDateTime'
+      )
     ) {
       timeframeControls.classList.remove('show');
       timeframeButton.classList.remove('active');
     }
   });
 
-  applyButton.addEventListener('click', async function () {
+  applyButton.addEventListener('click', async () => {
     const startValue = startDateTimeInput.value;
     const endValue = endDateTimeInput.value;
-
     if (!startValue || !endValue) {
       alert('Please select both start and end dates');
       return;
     }
-
     const startDate = new Date(startValue + 'Z');
     const endDate = new Date(endValue + 'Z');
-
     if (startDate >= endDate) {
       alert('Start date must be before end date');
       return;
     }
-
     if (endDate > new Date()) {
       alert('End date cannot be in the future');
       return;
     }
-
     applyButton.disabled = true;
     applyButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-
     try {
       await fetchCustomTimeframeData(startDate, endDate);
-      timeframeControls.classList.remove('show');
-      timeframeButton.classList.remove('active');
       timeframeButton.innerHTML =
         '<i class="fas fa-calendar-alt"></i> Change Timeframe';
       timeframeButton.style.backgroundColor = '#00bce7';
@@ -144,18 +136,14 @@ function initializeTimeframeControls() {
     }
   });
 
-  resetButton.addEventListener('click', async function () {
+  resetButton.addEventListener('click', async () => {
     resetButton.disabled = true;
     resetButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-
     try {
       isCustomTimeframe = false;
       customStartDate = null;
       customEndDate = null;
-
       await fetchDataAndDrawChart();
-      timeframeControls.classList.remove('show');
-      timeframeButton.classList.remove('active');
       timeframeButton.innerHTML =
         '<i class="fas fa-calendar-alt"></i> Change Timeframe';
       timeframeButton.style.backgroundColor = '#00bce7';
@@ -167,48 +155,76 @@ function initializeTimeframeControls() {
       resetButton.innerHTML = '<i class="fas fa-undo"></i> Reset to Live';
     }
   });
+
+  pastDayButton.addEventListener('click', async () => {
+    pastDayButton.disabled = true;
+    pastDayButton.innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    try {
+      isCustomTimeframe = true;
+      timeframeButton.innerHTML =
+        '<i class="fas fa-calendar-alt"></i> Change Timeframe';
+      timeframeButton.style.backgroundColor = '#00bce7';
+
+      const data = await fetchData(
+        'https://api.communitrics.com/mrbeast?minutelyPastDay=true'
+      );
+
+      allMrbeastData = data.map(e => [
+        new Date(e.currentTime).getTime(),
+        Number(e.count),
+      ]);
+      filteredMrbeastData = allMrbeastData;
+      drawChart(filteredMrbeastData);
+      const chart = Highcharts.charts[Highcharts.charts.length - 1];
+      if (chart) {
+        chart.setSubtitle({
+          text: `Past Day`,
+          style: {
+            color: '#999999',
+            fontSize: '12px',
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load Past Day data:', err);
+      alert('Could not load Past Day data. Please try again.');
+    } finally {
+      pastDayButton.disabled = false;
+      pastDayButton.innerHTML = '<i class="fas fa-history"></i> Past Day';
+    }
+  });
 }
 
 async function fetchCustomTimeframeData(startDate, endDate) {
   try {
     const startISO = startDate.toISOString();
     const endISO = endDate.toISOString();
-
     const url = `https://api.communitrics.com/mrbeast?tenminutely=true&start=${startISO}&end=${endISO}`;
-
     let response = await fetch(url);
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
     const data = await response.json();
-
     if (data.length === 0) {
       alert('No data available for the selected timeframe');
       return;
     }
-
     isCustomTimeframe = true;
     customStartDate = startDate;
     customEndDate = endDate;
-
     allMrbeastData = data.map(entry => [
       new Date(entry.currentTime).getTime(),
       Number(entry.count),
     ]);
-
     filteredMrbeastData = allMrbeastData;
-
     drawChart(filteredMrbeastData);
-
     const chart = Highcharts.charts[Highcharts.charts.length - 1];
     if (chart) {
       chart.setTitle({ text: 'MrBeast Subscriber Count' });
       chart.setSubtitle({
         text: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-        style: {
-          color: '#999999',
-          fontSize: '12px',
-        },
+        style: { color: '#999999', fontSize: '12px' },
       });
     }
   } catch (error) {
@@ -855,7 +871,9 @@ function fillDailyTable(data) {
   }));
 
   const startEastern = moment(entries[0].currentTime).tz(tz).startOf('day');
-  const endEastern = moment(entries[entries.length - 1].currentTime).tz(tz).endOf('day');
+  const endEastern = moment(entries[entries.length - 1].currentTime)
+    .tz(tz)
+    .endOf('day');
 
   let cursor = startEastern.clone();
   let previousGain = null;
