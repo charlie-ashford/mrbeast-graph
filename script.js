@@ -855,7 +855,7 @@ function fillDailyTable(data) {
   }));
 
   const startEastern = moment(entries[0].currentTime).tz(tz).startOf('day');
-  const endEastern = moment().tz(tz).endOf('day');
+  const endEastern = moment(entries[entries.length - 1].currentTime).tz(tz).endOf('day');
 
   let cursor = startEastern.clone();
   let previousGain = null;
