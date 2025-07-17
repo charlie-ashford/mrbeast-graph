@@ -78,11 +78,14 @@ function initializeTimeframeControls() {
   const resetButton = document.getElementById('resetTimeframe');
   const pastDayButton = document.getElementById('pastDayPreset');
 
-  const now = new Date();
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const now = moment().tz('America/New_York').toDate();
+  const sevenDaysAgo = moment()
+    .tz('America/New_York')
+    .subtract(7, 'days')
+    .toDate();
 
-  endDateTimeInput.value = formatDateTimeLocalUTC(now);
-  startDateTimeInput.value = formatDateTimeLocalUTC(sevenDaysAgo);
+  endDateTimeInput.value = formatDateTimeLocal(now);
+  startDateTimeInput.value = formatDateTimeLocal(sevenDaysAgo);
 
   timeframeButton.addEventListener('click', () => {
     timeframeControls.classList.toggle('show');
@@ -697,9 +700,9 @@ async function fetchDataAndDrawChart() {
       }
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    const initialFilteredData = filterDataByDate(today);
-    fillHourlyTable(initialFilteredData, today);
+    const todayEastern = moment().tz('America/New_York').format('YYYY-MM-DD');
+    const initialFilteredData = filterDataByDate(todayEastern);
+    fillHourlyTable(initialFilteredData, todayEastern);
     fillDailyTable(data);
   } catch (error) {
     console.error('Failed to fetch data:', error);
@@ -740,13 +743,41 @@ function findClosestEntry(data, targetDate) {
 function filterDataByDate(date) {
   return allMrbeastData
     .filter(entry => {
-      const entryDate = new Date(entry[0]).toISOString().split('T')[0];
-      return entryDate === date;
+      const entryDateEastern = moment(entry[0])
+        .tz('America/New_York')
+        .format('YYYY-MM-DD');
+      return entryDateEastern === date;
     })
     .map(entry => ({
       currentTime: new Date(entry[0]),
       count: entry[1],
     }));
+}
+
+function formatTimeLabel(easternHour) {
+  const easternLabel = easternHour.format('h:mm A');
+  const utcLabel = easternHour.clone().utc().format('HH:mm');
+  const localLabel = easternHour.clone().local().format('h:mm A');
+
+  return `<div class="time-display">
+    <div class="primary-time">${easternLabel} US Eastern</div>
+    <div class="secondary-times">
+      <span class="utc-time">${utcLabel} UTC</span> • 
+      <span class="local-time">${localLabel} local</span>
+    </div>
+  </div>`;
+}
+
+function formatDateLabel(cursor) {
+  const dayLabel = cursor.format('ddd, MMM D');
+  const isoDate = cursor.format('YYYY-MM-DD');
+
+  return `<div class="time-display">
+    <div class="primary-time">${dayLabel}</div>
+    <div class="secondary-times">
+      <span class="iso-date">${isoDate}</span>
+    </div>
+  </div>`;
 }
 
 function fillHourlyTable(data, selectedDate) {
@@ -756,50 +787,61 @@ function fillHourlyTable(data, selectedDate) {
   tbody.innerHTML = '';
 
   if (!data.length) {
-    console.error('No data available to process.');
+    console.error('No data available to process for date:', selectedDate);
     return;
   }
 
-  const startUtc = moment.utc(selectedDate, 'YYYY-MM-DD').startOf('day');
-  const prevUtc = startUtc.clone().subtract(1, 'day');
-  const prevDayStr = prevUtc.format('YYYY-MM-DD');
+  const startEastern = moment
+    .tz(selectedDate, 'YYYY-MM-DD', 'America/New_York')
+    .startOf('day');
+  const prevEastern = startEastern.clone().subtract(1, 'day');
+  const prevDayStr = prevEastern.format('YYYY-MM-DD');
 
   const yesterday = allMrbeastData
     .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
-    .filter(e => moment.utc(e.currentTime).format('YYYY-MM-DD') === prevDayStr);
+    .filter(
+      e =>
+        moment.tz(e.currentTime, 'America/New_York').format('YYYY-MM-DD') ===
+        prevDayStr
+    );
 
   let lastHourCount = null;
   let previousGain = null;
   if (yesterday.length) {
-    const at23 = findClosestEntry(yesterday, prevUtc.clone().hour(23).toDate());
+    const at23Eastern = prevEastern.clone().hour(23);
+    const at23 = findClosestEntry(yesterday, at23Eastern.toDate());
     if (at23) {
       lastHourCount = at23.count;
-      const at22 = findClosestEntry(
-        yesterday,
-        prevUtc.clone().hour(22).toDate()
-      );
+      const at22Eastern = prevEastern.clone().hour(22);
+      const at22 = findClosestEntry(yesterday, at22Eastern.toDate());
       if (at22) previousGain = at23.count - at22.count;
     }
   }
 
-  const nowUtc = moment.utc();
-  const nextHourUtc = nowUtc.clone().add(1, 'hour');
-  const todayUtcStr = nowUtc.format('YYYY-MM-DD');
+  const nowEastern = moment.tz('America/New_York');
+  const nextHourEastern = nowEastern.clone().add(1, 'hour');
+  const todayEasternStr = nowEastern.format('YYYY-MM-DD');
+
+  const selectedUtc = moment.utc(selectedDate, 'YYYY-MM-DD').startOf('day');
+  const nextUtc = selectedUtc.clone().add(1, 'day');
+
+  const extendedData = allMrbeastData
+    .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
+    .filter(e => {
+      const m = moment.utc(e.currentTime);
+      return m.isSame(selectedUtc, 'day') || m.isSame(nextUtc, 'day');
+    });
 
   for (let h = 0; h < 24; h++) {
-    const mUtc = startUtc.clone().add(h, 'hours');
-    const closest = findClosestEntry(data, mUtc.toDate());
+    const easternHour = startEastern.clone().add(h, 'hours');
+    const closest = findClosestEntry(extendedData, easternHour.toDate());
 
     const tr = document.createElement('tr');
     const timeCell = document.createElement('td');
     const subCell = document.createElement('td');
     const gainCell = document.createElement('td');
 
-    const utcLabel = mUtc.utc().format('HH:mm') + ' UTC';
-    const localLabel = mUtc.clone().local().format('HH:mm');
-    const easternLabel = mUtc.tz('America/New_York').format('HH:mm z');
-
-    timeCell.innerHTML = `${utcLabel} (${localLabel} local)<br>${easternLabel}`;
+    timeCell.innerHTML = formatTimeLabel(easternHour);
 
     if (closest) {
       const cur = closest.count;
@@ -825,20 +867,22 @@ function fillHourlyTable(data, selectedDate) {
         }
         previousGain = gain;
       } else {
+        subCell.textContent = '-';
         gainCell.textContent = '-';
       }
 
       if (
-        mUtc.format('YYYY-MM-DD') === todayUtcStr &&
-        mUtc.isSame(nextHourUtc, 'hour')
+        easternHour.format('YYYY-MM-DD') === todayEasternStr &&
+        easternHour.isSame(nextHourEastern, 'hour')
       ) {
         const fmt = new Intl.DateTimeFormat('en-US', {
           hour: '2-digit',
           minute: '2-digit',
+          timeZone: 'America/New_York',
         });
         gainCell.innerHTML +=
           `<br><span style="font-size:calc(0.9em - 15%)">` +
-          `As of ${fmt.format(new Date())} local time</span>`;
+          `As of ${fmt.format(new Date())} US Eastern</span>`;
       }
 
       lastHourCount = cur;
@@ -892,9 +936,7 @@ function fillDailyTable(data) {
     const subCell = document.createElement('td');
     const gCell = document.createElement('td');
 
-    const dayLabel = cursor.format('ddd, MMM D');
-    const isoDate = cursor.format('YYYY-MM-DD');
-    dateCell.innerHTML = `${dayLabel}<br>${isoDate}`;
+    dateCell.innerHTML = formatDateLabel(cursor);
 
     subCell.textContent = endEnt ? endEnt.count.toLocaleString() : '-';
 
@@ -930,7 +972,7 @@ function fillDailyTable(data) {
 
   if (mostRecent) {
     const c = mostRecent.getElementsByTagName('td')[2];
-    const nowET = moment().tz(tz).format('HH:mm');
+    const nowET = moment().tz(tz).format('h:mm A');
     c.innerHTML +=
       `<br><span style="font-size:calc(0.9em - 15%)">` +
       `As of ${nowET} US Eastern</span>`;
@@ -1292,8 +1334,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
   const datePicker = document.getElementById('datePicker');
-  const today = new Date().toISOString().split('T')[0];
-  datePicker.value = today;
+  const todayEastern = moment().tz('America/New_York').format('YYYY-MM-DD');
+  datePicker.value = todayEastern;
 
   datePicker.addEventListener('change', function () {
     const selectedDate = this.value;
@@ -1303,18 +1345,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   fetchDataAndDrawChart();
 
-  const initialFilteredData = filterDataByDate(today);
-  fillHourlyTable(initialFilteredData, today);
+  const tableContainer = document.getElementById('scrollableTable');
+  const isTouchDevice =
+    'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  if (!isTouchDevice) {
+    tableContainer.addEventListener('wheel', function (e) {
+      if (tableContainer.scrollHeight > tableContainer.clientHeight) {
+        e.preventDefault();
+        tableContainer.scrollTop += e.deltaY;
+      }
+    });
+  }
 });
-
-const tableContainer = document.getElementById('scrollableTable');
-const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-if (!isTouchDevice) {
-  tableContainer.addEventListener('wheel', function (e) {
-    if (tableContainer.scrollHeight > tableContainer.clientHeight) {
-      e.preventDefault();
-      tableContainer.scrollTop += e.deltaY;
-    }
-  });
-}
