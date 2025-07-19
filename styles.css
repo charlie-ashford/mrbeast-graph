@@ -323,7 +323,7 @@ h2 {
   position: absolute;
   background-color: #1e1e1e;
   min-width: 225px;
-  z-index: 1;
+  z-index: 10;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #1e1e1e;
@@ -806,7 +806,20 @@ select:focus:not(:focus-visible) {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
+  #info {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+
+  .info-tile:nth-child(1),
+  .info-tile:nth-child(2) {
+    grid-column: span 1;
+    height: auto;
+  }
+}
+
+@media (max-width: 800px) {
   body {
     overflow-x: hidden;
   }
@@ -941,16 +954,91 @@ select:focus:not(:focus-visible) {
     flex-direction: column;
     width: 100%;
     margin: 25px auto;
+    padding: 0 10px;
   }
 
   .table-container {
     width: 100%;
     margin-bottom: 25px;
-    overflow-x: auto;
+    padding: 15px;
+  }
+
+  .table-container > div:first-child {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .table-container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  #datePicker {
+    position: static !important;
+    margin: 10px 0 0 0 !important;
+    width: 200px;
+  }
+
+  .scrollable-table-container {
+    max-height: 70vh;
+    overflow: auto;
   }
 
   table {
     width: 100%;
-    min-width: 500px;
+    min-width: unset;
+    font-size: 14px;
+  }
+
+  th,
+  td {
+    padding: 8px 4px;
+    font-size: 12px;
+    word-wrap: break-word;
+  }
+
+  th:first-child,
+  td:first-child {
+    min-width: 120px;
+    position: sticky;
+    left: 0;
+    background-color: inherit;
+    z-index: 2;
+  }
+
+  th:first-child {
+    background-color: #00bce7;
+  }
+
+  tbody tr:hover {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  tbody tr:hover td:first-child::before {
+    display: none !important;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    min-width: 100px;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    min-width: 80px;
+  }
+
+  .time-display {
+    line-height: 1.2;
+  }
+
+  .primary-time {
+    font-size: 0.9em;
+  }
+
+  .secondary-times {
+    font-size: 0.75em;
+    margin-top: 1px;
   }
 }
