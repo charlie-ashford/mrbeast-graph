@@ -78,14 +78,11 @@ function initializeTimeframeControls() {
   const resetButton = document.getElementById('resetTimeframe');
   const pastDayButton = document.getElementById('pastDayPreset');
 
-  const now = moment().tz('America/New_York').toDate();
-  const sevenDaysAgo = moment()
-    .tz('America/New_York')
-    .subtract(7, 'days')
-    .toDate();
+  const now = moment().tz('America/New_York');
+  const sevenDaysAgo = moment().tz('America/New_York').subtract(7, 'days');
 
-  endDateTimeInput.value = formatDateTimeLocal(now);
-  startDateTimeInput.value = formatDateTimeLocal(sevenDaysAgo);
+  endDateTimeInput.value = now.format('YYYY-MM-DDTHH:mm');
+  startDateTimeInput.value = sevenDaysAgo.format('YYYY-MM-DDTHH:mm');
 
   timeframeButton.addEventListener('click', () => {
     timeframeControls.classList.toggle('show');
@@ -113,13 +110,14 @@ function initializeTimeframeControls() {
       alert('Please select both start and end dates');
       return;
     }
-    const startDate = new Date(startValue + 'Z');
-    const endDate = new Date(endValue + 'Z');
+    const startDate = moment.tz(startValue, 'America/New_York').toDate();
+    const endDate = moment.tz(endValue, 'America/New_York').toDate();
+    const currentTime = moment().tz('America/New_York').toDate();
     if (startDate >= endDate) {
       alert('Start date must be before end date');
       return;
     }
-    if (endDate > new Date()) {
+    if (endDate > currentTime) {
       alert('End date cannot be in the future');
       return;
     }
