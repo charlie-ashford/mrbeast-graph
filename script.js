@@ -1,3 +1,5 @@
+const { DateTime } = luxon;
+
 let allMrbeastData = [];
 let filteredMrbeastData = [];
 let isCustomTimeframe = false;
@@ -78,11 +80,11 @@ function initializeTimeframeControls() {
   const resetButton = document.getElementById('resetTimeframe');
   const pastDayButton = document.getElementById('pastDayPreset');
 
-  const now = moment().tz('America/New_York');
-  const sevenDaysAgo = moment().tz('America/New_York').subtract(7, 'days');
+  const now = DateTime.now().setZone('America/New_York');
+  const sevenDaysAgo = now.minus({ days: 7 });
 
-  endDateTimeInput.value = now.format('YYYY-MM-DDTHH:mm');
-  startDateTimeInput.value = sevenDaysAgo.format('YYYY-MM-DDTHH:mm');
+  endDateTimeInput.value = now.toFormat("yyyy-MM-dd'T'HH:mm");
+  startDateTimeInput.value = sevenDaysAgo.toFormat("yyyy-MM-dd'T'HH:mm");
 
   timeframeButton.addEventListener('click', () => {
     timeframeControls.classList.toggle('show');
@@ -110,9 +112,13 @@ function initializeTimeframeControls() {
       alert('Please select both start and end dates');
       return;
     }
-    const startDate = moment.tz(startValue, 'America/New_York').toDate();
-    const endDate = moment.tz(endValue, 'America/New_York').toDate();
-    const currentTime = moment().tz('America/New_York').toDate();
+    const startDate = DateTime.fromISO(startValue, {
+      zone: 'America/New_York',
+    }).toJSDate();
+    const endDate = DateTime.fromISO(endValue, {
+      zone: 'America/New_York',
+    }).toJSDate();
+    const currentTime = DateTime.now().setZone('America/New_York').toJSDate();
     if (startDate >= endDate) {
       alert('Start date must be before end date');
       return;
@@ -266,7 +272,9 @@ function calculateGainedToday(data) {
 
 async function updateInfoSection(filteredData) {
   const firstEntry = {
-    currentTime: moment.tz('2025-01-01 00:00:00.000', 'America/New_York'),
+    currentTime: DateTime.fromISO('2025-01-01T00:00:00.000', {
+      zone: 'America/New_York',
+    }).toJSDate(),
     count: 340665376,
   };
   const lastEntry = filteredData[filteredData.length - 1];
@@ -435,7 +443,7 @@ async function fetchData(url, signal) {
 
 function drawChart(mrbeastData) {
   mrbeastData = mrbeastData.map(point => [
-    moment.tz(point[0], 'America/New_York').valueOf(),
+    DateTime.fromMillis(point[0], { zone: 'America/New_York' }).toMillis(),
     point[1],
   ]);
 
@@ -698,7 +706,9 @@ async function fetchDataAndDrawChart() {
       }
     }
 
-    const todayEastern = moment().tz('America/New_York').format('YYYY-MM-DD');
+    const todayEastern = DateTime.now()
+      .setZone('America/New_York')
+      .toFormat('yyyy-MM-dd');
     const initialFilteredData = filterDataByDate(todayEastern);
     fillHourlyTable(initialFilteredData, todayEastern);
     fillDailyTable(data);
@@ -741,9 +751,9 @@ function findClosestEntry(data, targetDate) {
 function filterDataByDate(date) {
   return allMrbeastData
     .filter(entry => {
-      const entryDateEastern = moment(entry[0])
-        .tz('America/New_York')
-        .format('YYYY-MM-DD');
+      const entryDateEastern = DateTime.fromMillis(entry[0], {
+        zone: 'America/New_York',
+      }).toFormat('yyyy-MM-dd');
       return entryDateEastern === date;
     })
     .map(entry => ({
@@ -753,9 +763,9 @@ function filterDataByDate(date) {
 }
 
 function formatTimeLabel(easternHour) {
-  const easternLabel = easternHour.format('h:mm A');
-  const utcLabel = easternHour.clone().utc().format('HH:mm');
-  const localLabel = easternHour.clone().local().format('h:mm A');
+  const easternLabel = easternHour.toFormat('h:mm a');
+  const utcLabel = easternHour.toUTC().toFormat('HH:mm');
+  const localLabel = easternHour.toLocal().toFormat('h:mm a');
 
   return `<div class="time-display">
     <div class="primary-time">${easternLabel} US Eastern</div>
@@ -767,8 +777,8 @@ function formatTimeLabel(easternHour) {
 }
 
 function formatDateLabel(cursor) {
-  const dayLabel = cursor.format('ddd, MMM D');
-  const isoDate = cursor.format('YYYY-MM-DD');
+  const dayLabel = cursor.toFormat('ccc, MMM d');
+  const isoDate = cursor.toFormat('yyyy-MM-dd');
 
   return `<div class="time-display">
     <div class="primary-time">${dayLabel}</div>
@@ -789,50 +799,53 @@ function fillHourlyTable(data, selectedDate) {
     return;
   }
 
-  const startEastern = moment
-    .tz(selectedDate, 'YYYY-MM-DD', 'America/New_York')
-    .startOf('day');
-  const prevEastern = startEastern.clone().subtract(1, 'day');
-  const prevDayStr = prevEastern.format('YYYY-MM-DD');
+  const startEastern = DateTime.fromFormat(selectedDate, 'yyyy-MM-dd', {
+    zone: 'America/New_York',
+  }).startOf('day');
+  const prevEastern = startEastern.minus({ days: 1 });
+  const prevDayStr = prevEastern.toFormat('yyyy-MM-dd');
 
   const yesterday = allMrbeastData
     .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
     .filter(
       e =>
-        moment.tz(e.currentTime, 'America/New_York').format('YYYY-MM-DD') ===
-        prevDayStr
+        DateTime.fromJSDate(e.currentTime, {
+          zone: 'America/New_York',
+        }).toFormat('yyyy-MM-dd') === prevDayStr
     );
 
   let lastHourCount = null;
   let previousGain = null;
   if (yesterday.length) {
-    const at23Eastern = prevEastern.clone().hour(23);
-    const at23 = findClosestEntry(yesterday, at23Eastern.toDate());
+    const at23Eastern = prevEastern.set({ hour: 23 });
+    const at23 = findClosestEntry(yesterday, at23Eastern.toJSDate());
     if (at23) {
       lastHourCount = at23.count;
-      const at22Eastern = prevEastern.clone().hour(22);
-      const at22 = findClosestEntry(yesterday, at22Eastern.toDate());
+      const at22Eastern = prevEastern.set({ hour: 22 });
+      const at22 = findClosestEntry(yesterday, at22Eastern.toJSDate());
       if (at22) previousGain = at23.count - at22.count;
     }
   }
 
-  const nowEastern = moment.tz('America/New_York');
-  const nextHourEastern = nowEastern.clone().add(1, 'hour');
-  const todayEasternStr = nowEastern.format('YYYY-MM-DD');
+  const nowEastern = DateTime.now().setZone('America/New_York');
+  const nextHourEastern = nowEastern.plus({ hours: 1 });
+  const todayEasternStr = nowEastern.toFormat('yyyy-MM-dd');
 
-  const selectedUtc = moment.utc(selectedDate, 'YYYY-MM-DD').startOf('day');
-  const nextUtc = selectedUtc.clone().add(1, 'day');
+  const selectedUtc = DateTime.fromFormat(selectedDate, 'yyyy-MM-dd', {
+    zone: 'utc',
+  }).startOf('day');
+  const nextUtc = selectedUtc.plus({ days: 1 });
 
   const extendedData = allMrbeastData
     .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
     .filter(e => {
-      const m = moment.utc(e.currentTime);
-      return m.isSame(selectedUtc, 'day') || m.isSame(nextUtc, 'day');
+      const m = DateTime.fromJSDate(e.currentTime, { zone: 'utc' });
+      return m.hasSame(selectedUtc, 'day') || m.hasSame(nextUtc, 'day');
     });
 
   for (let h = 0; h < 24; h++) {
-    const easternHour = startEastern.clone().add(h, 'hours');
-    const closest = findClosestEntry(extendedData, easternHour.toDate());
+    const easternHour = startEastern.plus({ hours: h });
+    const closest = findClosestEntry(extendedData, easternHour.toJSDate());
 
     const tr = document.createElement('tr');
     const timeCell = document.createElement('td');
@@ -870,8 +883,8 @@ function fillHourlyTable(data, selectedDate) {
       }
 
       if (
-        easternHour.format('YYYY-MM-DD') === todayEasternStr &&
-        easternHour.isSame(nextHourEastern, 'hour')
+        easternHour.toFormat('yyyy-MM-dd') === todayEasternStr &&
+        easternHour.hasSame(nextHourEastern, 'hour')
       ) {
         const fmt = new Intl.DateTimeFormat('en-US', {
           hour: '2-digit',
@@ -909,19 +922,22 @@ function fillDailyTable(data) {
     count: Number(e.count),
   }));
 
-  const startEastern = moment(entries[0].currentTime).tz(tz).startOf('day');
-  const endEastern = moment(entries[entries.length - 1].currentTime)
-    .tz(tz)
-    .endOf('day');
+  const startEastern = DateTime.fromJSDate(entries[0].currentTime, {
+    zone: tz,
+  }).startOf('day');
+  const endEastern = DateTime.fromJSDate(
+    entries[entries.length - 1].currentTime,
+    { zone: tz }
+  ).endOf('day');
 
-  let cursor = startEastern.clone();
+  let cursor = startEastern;
   let previousGain = null;
   let mostRecent = null;
 
-  while (cursor.isBefore(endEastern)) {
-    const nextDay = cursor.clone().add(1, 'day');
-    const utcStart = cursor.clone().utc().toDate();
-    const utcEnd = nextDay.clone().utc().toDate();
+  while (cursor < endEastern) {
+    const nextDay = cursor.plus({ days: 1 });
+    const utcStart = cursor.toUTC().toJSDate();
+    const utcEnd = nextDay.toUTC().toJSDate();
 
     const startEnt = findClosestEntry(entries, utcStart);
     const endEnt = findClosestEntry(entries, utcEnd);
@@ -970,7 +986,7 @@ function fillDailyTable(data) {
 
   if (mostRecent) {
     const c = mostRecent.getElementsByTagName('td')[2];
-    const nowET = moment().tz(tz).format('h:mm A');
+    const nowET = DateTime.now().setZone(tz).toFormat('h:mm a');
     c.innerHTML +=
       `<br><span style="font-size:calc(0.9em - 15%)">` +
       `As of ${nowET} US Eastern</span>`;
@@ -1332,7 +1348,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
   const datePicker = document.getElementById('datePicker');
-  const todayEastern = moment().tz('America/New_York').format('YYYY-MM-DD');
+  const todayEastern = DateTime.now()
+    .setZone('America/New_York')
+    .toFormat('yyyy-MM-dd');
   datePicker.value = todayEastern;
 
   datePicker.addEventListener('change', function () {
