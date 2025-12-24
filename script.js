@@ -30,11 +30,18 @@ function formatNumber(num, decimalPlaces = 0) {
 }
 
 function formatDateTime(dateString, includeSeconds = true) {
-  const dt = DateTime.fromISO(dateString, { zone: 'America/New_York' });
+  const date = new Date(dateString);
   if (includeSeconds) {
-    return dt.toFormat('MM/dd/yyyy hh:mm:ss a');
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   } else {
-    return dt.toFormat('MM/dd/yyyy hh:mm a');
+    return (
+      date.toLocaleDateString() +
+      ' ' +
+      date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    );
   }
 }
 
@@ -47,13 +54,21 @@ function formatTime(ms) {
 }
 
 function formatDateTimeLocal(date) {
-  const dt = DateTime.fromJSDate(date, { zone: 'America/New_York' });
-  return dt.toFormat("yyyy-MM-dd'T'HH:mm");
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 function formatDateTimeLocalUTC(date) {
-  const dt = DateTime.fromJSDate(date).toUTC();
-  return dt.toFormat("yyyy-MM-dd'T'HH:mm");
+  const year = date.getUTCFullYear();
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  const hours = date.getUTCHours().toString().padStart(2, '0');
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 function initializeTimeframeControls() {
@@ -162,7 +177,7 @@ function initializeTimeframeControls() {
       );
 
       const pastDayChartData = data.map(e => [
-        DateTime.fromISO(e.currentTime).toMillis(),
+        new Date(e.currentTime).getTime(),
         Number(e.count),
       ]);
       filteredMrbeastData = pastDayChartData;
@@ -190,42 +205,29 @@ function initializeTimeframeControls() {
 
 async function fetchCustomTimeframeData(startDate, endDate) {
   try {
-    const startDt = DateTime.fromJSDate(startDate, {
-      zone: 'America/New_York',
-    });
-    const endDt = DateTime.fromJSDate(endDate, { zone: 'America/New_York' });
-
-    const startISO = startDt.toISO();
-    const endISO = endDt.toISO();
-
+    const startISO = startDate.toISOString();
+    const endISO = endDate.toISOString();
     const url =
       `https://api.communitrics.com/mrbeast?tenminutely=true` +
       `&start=${startISO}&end=${endISO}`;
     const data = await fetchData(url);
-
     if (!data.length) {
       alert('No data available for the selected timeframe');
       return;
     }
-
     isCustomTimeframe = true;
     customStartDate = startDate;
     customEndDate = endDate;
-
     filteredMrbeastData = data.map(entry => [
-      DateTime.fromISO(entry.currentTime).toMillis(),
+      new Date(entry.currentTime).getTime(),
       Number(entry.count),
     ]);
-
     drawChart(filteredMrbeastData);
-
     const chart = Highcharts.charts[Highcharts.charts.length - 1];
     if (chart) {
       chart.setTitle({ text: 'MrBeast Subscriber Count' });
       chart.setSubtitle({
-        text: `${startDt.toFormat('MM/dd/yyyy')} - ${endDt.toFormat(
-          'MM/dd/yyyy'
-        )}`,
+        text: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
         style: { color: '#999999', fontSize: '12px' },
       });
     }
@@ -236,25 +238,25 @@ async function fetchCustomTimeframeData(startDate, endDate) {
 }
 
 function calculateGainedToday(data) {
-  const startOfDayEastern = DateTime.now()
-    .setZone('America/New_York')
-    .startOf('day');
+  const now = new Date();
+  const easternTime = new Date(
+    now.toLocaleString('en-US', { timeZone: 'America/New_York' })
+  );
+
+  const startOfDayEastern = new Date(easternTime);
+  startOfDayEastern.setHours(0, 0, 0, 0);
 
   let startOfDayCount = null;
   let closestTimeDiff = Infinity;
 
   for (const entry of data) {
-    const entryTime = DateTime.fromJSDate(
-      entry.currentTime instanceof Date
-        ? entry.currentTime
-        : new Date(entry.currentTime),
-      { zone: 'America/New_York' }
+    const entryTime = new Date(entry.currentTime);
+    const entryTimeEastern = new Date(
+      entryTime.toLocaleString('en-US', { timeZone: 'America/New_York' })
     );
-    const timeDiff = Math.abs(
-      entryTime.toMillis() - startOfDayEastern.toMillis()
-    );
+    const timeDiff = Math.abs(entryTimeEastern - startOfDayEastern);
 
-    if (timeDiff < closestTimeDiff && entryTime <= startOfDayEastern) {
+    if (timeDiff < closestTimeDiff && entryTimeEastern <= startOfDayEastern) {
       closestTimeDiff = timeDiff;
       startOfDayCount = entry.count;
     }
@@ -278,57 +280,27 @@ async function updateInfoSection(filteredData) {
   const lastEntry = filteredData[filteredData.length - 1];
   const totalGained = lastEntry.count - firstEntry.count;
   const totalTime =
-    DateTime.fromJSDate(
-      lastEntry.currentTime instanceof Date
-        ? lastEntry.currentTime
-        : new Date(lastEntry.currentTime)
-    ).toMillis() - DateTime.fromJSDate(firstEntry.currentTime).toMillis();
+    new Date(lastEntry.currentTime).getTime() -
+    new Date(firstEntry.currentTime).getTime();
 
-  const now = DateTime.now().setZone('America/New_York');
-  const oneDayAgo = now.minus({ days: 1 });
-  const sevenDaysAgo = now.minus({ days: 7 });
-  const thirtyDaysAgo = now.minus({ days: 30 });
-  const oneYearAgo = now.minus({ days: 365 });
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
-  const recentData24Hours = filteredData.filter(entry => {
-    const entryTime = DateTime.fromJSDate(
-      entry.currentTime instanceof Date
-        ? entry.currentTime
-        : new Date(entry.currentTime),
-      { zone: 'America/New_York' }
-    );
-    return entryTime >= oneDayAgo;
-  });
-
-  const recentData7Days = filteredData.filter(entry => {
-    const entryTime = DateTime.fromJSDate(
-      entry.currentTime instanceof Date
-        ? entry.currentTime
-        : new Date(entry.currentTime),
-      { zone: 'America/New_York' }
-    );
-    return entryTime >= sevenDaysAgo;
-  });
-
-  const recentData30Days = filteredData.filter(entry => {
-    const entryTime = DateTime.fromJSDate(
-      entry.currentTime instanceof Date
-        ? entry.currentTime
-        : new Date(entry.currentTime),
-      { zone: 'America/New_York' }
-    );
-    return entryTime >= thirtyDaysAgo;
-  });
-
-  const recentData365Days = filteredData.filter(entry => {
-    const entryTime = DateTime.fromJSDate(
-      entry.currentTime instanceof Date
-        ? entry.currentTime
-        : new Date(entry.currentTime),
-      { zone: 'America/New_York' }
-    );
-    return entryTime >= oneYearAgo;
-  });
+  const recentData24Hours = filteredData.filter(
+    entry => new Date(entry.currentTime) >= oneDayAgo
+  );
+  const recentData7Days = filteredData.filter(
+    entry => new Date(entry.currentTime) >= sevenDaysAgo
+  );
+  const recentData30Days = filteredData.filter(
+    entry => new Date(entry.currentTime) >= thirtyDaysAgo
+  );
+  const recentData365Days = filteredData.filter(
+    entry => new Date(entry.currentTime) >= oneYearAgo
+  );
 
   const recentGained24Hours =
     recentData24Hours.length > 1
@@ -698,7 +670,7 @@ async function fetchDataAndDrawChart() {
     const data = await response.json();
 
     allMrbeastData = data.map(entry => [
-      DateTime.fromISO(entry.currentTime).toMillis(),
+      new Date(entry.currentTime).getTime(),
       Number(entry.count),
     ]);
 
@@ -748,27 +720,30 @@ async function fetchDataAndDrawChart() {
   }
 }
 
+function isEDT(date) {
+  const easternDate = new Date(
+    date.toLocaleString('en-US', { timeZone: 'America/New_York' })
+  );
+
+  const year = easternDate.getFullYear();
+
+  let dstStart = new Date(year, 2, 14, 2, 0, 0);
+  dstStart.setDate(14 - dstStart.getDay());
+
+  let dstEnd = new Date(year, 10, 7, 2, 0, 0);
+  dstEnd.setDate(7 - dstEnd.getDay());
+
+  return easternDate >= dstStart && easternDate < dstEnd;
+}
+
 function findClosestEntry(data, targetDate) {
-  const targetDt =
-    targetDate instanceof DateTime
-      ? targetDate
-      : DateTime.fromJSDate(targetDate);
-
   return data.reduce((prev, curr) => {
-    const prevDt = DateTime.fromJSDate(
-      prev.currentTime instanceof Date
-        ? prev.currentTime
-        : new Date(prev.currentTime)
+    const prevDiff = Math.abs(
+      new Date(prev.currentTime).getTime() - targetDate.getTime()
     );
-    const currDt = DateTime.fromJSDate(
-      curr.currentTime instanceof Date
-        ? curr.currentTime
-        : new Date(curr.currentTime)
+    const currDiff = Math.abs(
+      new Date(curr.currentTime).getTime() - targetDate.getTime()
     );
-
-    const prevDiff = Math.abs(prevDt.toMillis() - targetDt.toMillis());
-    const currDiff = Math.abs(currDt.toMillis() - targetDt.toMillis());
-
     return currDiff < prevDiff ? curr : prev;
   }, data[0]);
 }
@@ -782,7 +757,7 @@ function filterDataByDate(date) {
       return entryDateEastern === date;
     })
     .map(entry => ({
-      currentTime: DateTime.fromMillis(entry[0]).toJSDate(),
+      currentTime: new Date(entry[0]),
       count: entry[1],
     }));
 }
@@ -831,10 +806,7 @@ function fillHourlyTable(data, selectedDate) {
   const prevDayStr = prevEastern.toFormat('yyyy-MM-dd');
 
   const yesterday = allMrbeastData
-    .map(([ts, ct]) => ({
-      currentTime: DateTime.fromMillis(ts).toJSDate(),
-      count: ct,
-    }))
+    .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
     .filter(
       e =>
         DateTime.fromJSDate(e.currentTime, {
@@ -865,10 +837,7 @@ function fillHourlyTable(data, selectedDate) {
   const nextUtc = selectedUtc.plus({ days: 1 });
 
   const extendedData = allMrbeastData
-    .map(([ts, ct]) => ({
-      currentTime: DateTime.fromMillis(ts).toJSDate(),
-      count: ct,
-    }))
+    .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
     .filter(e => {
       const m = DateTime.fromJSDate(e.currentTime, { zone: 'utc' });
       return m.hasSame(selectedUtc, 'day') || m.hasSame(nextUtc, 'day');
@@ -922,12 +891,9 @@ function fillHourlyTable(data, selectedDate) {
           minute: '2-digit',
           timeZone: 'America/New_York',
         });
-        const nowFormatted = DateTime.now()
-          .setZone('America/New_York')
-          .toFormat('hh:mm a');
         gainCell.innerHTML +=
           `<br><span style="font-size:calc(0.9em - 15%)">` +
-          `As of ${nowFormatted} US Eastern</span>`;
+          `As of ${fmt.format(new Date())} US Eastern</span>`;
       }
 
       lastHourCount = cur;
@@ -952,9 +918,7 @@ function fillDailyTable(data) {
 
   const entries = data.map(e => ({
     currentTime:
-      e.currentTime instanceof Date
-        ? e.currentTime
-        : DateTime.fromISO(e.currentTime).toJSDate(),
+      e.currentTime instanceof Date ? e.currentTime : new Date(e.currentTime),
     count: Number(e.count),
   }));
 
@@ -1052,47 +1016,39 @@ function convertDataToCSV(data, type = 'minutely') {
 
   let lastSelectedSubscribers = null;
 
-  data.sort((a, b) => {
-    const aTime = DateTime.fromJSDate(
-      a.currentTime instanceof Date ? a.currentTime : new Date(a.currentTime)
-    );
-    const bTime = DateTime.fromJSDate(
-      b.currentTime instanceof Date ? b.currentTime : new Date(b.currentTime)
-    );
-    return aTime.toMillis() - bTime.toMillis();
-  });
+  data.sort((a, b) => new Date(a.currentTime) - new Date(b.currentTime));
 
   if (type === 'dailyEST') {
     const dailyData = [];
     data.forEach(entry => {
-      const dt = DateTime.fromJSDate(
-        entry.currentTime instanceof Date
-          ? entry.currentTime
-          : new Date(entry.currentTime)
-      ).setZone('America/New_York');
+      const timestamp = new Date(entry.currentTime);
 
-      if (dt.hour === 0) {
+      const isDST = isEDT(timestamp);
+      const offset = isDST ? -4 : -5;
+      const estDate = new Date(timestamp.getTime() + offset * 60 * 60 * 1000);
+
+      if (estDate.getUTCHours() === 0) {
         dailyData.push(entry);
       }
     });
 
     let lastDate = null;
     dailyData.forEach(entry => {
-      const dt = DateTime.fromJSDate(
-        entry.currentTime instanceof Date
-          ? entry.currentTime
-          : DateTime.fromISO(entry.currentTime).toJSDate()
-      )
-        .setZone('America/New_York')
-        .startOf('day');
-
+      const timestamp = new Date(entry.currentTime);
       const subscribers = entry.count;
 
+      const isDST = isEDT(timestamp);
+      const offset = isDST ? -4 : -5;
+
+      const estDate = new Date(timestamp.getTime() + offset * 60 * 60 * 1000);
+      estDate.setUTCHours(0, 0, 0, 0);
+
       if (lastDate) {
-        let nextDate = lastDate.plus({ days: 1 });
-        while (nextDate < dt) {
-          csvRows.push([nextDate.toUTC().toISO(), '', ''].join(','));
-          nextDate = nextDate.plus({ days: 1 });
+        const nextDate = new Date(lastDate);
+        nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+        while (nextDate.getTime() < estDate.getTime()) {
+          csvRows.push([nextDate.toISOString(), '', ''].join(','));
+          nextDate.setUTCDate(nextDate.getUTCDate() + 1);
         }
       }
 
@@ -1102,11 +1058,11 @@ function convertDataToCSV(data, type = 'minutely') {
           : '';
 
       csvRows.push(
-        [dt.toUTC().toISO(), subscribers, gainsInPastPeriod].join(',')
+        [timestamp.toISOString(), subscribers, gainsInPastPeriod].join(',')
       );
 
       lastSelectedSubscribers = subscribers;
-      lastDate = dt;
+      lastDate = new Date(estDate);
     });
 
     return csvRows.join('\n');
@@ -1127,27 +1083,24 @@ function convertDataToCSV(data, type = 'minutely') {
       : 24 * 60 * 60 * 1000;
 
   data.forEach(entry => {
-    const dt =
-      entry.currentTime instanceof Date
-        ? DateTime.fromJSDate(entry.currentTime)
-        : DateTime.fromISO(entry.currentTime);
+    const timestamp = new Date(entry.currentTime);
     const subscribers = entry.count;
 
-    if (!dt.isValid) {
+    if (isNaN(timestamp.getTime())) {
       console.error(`Invalid date value: ${entry.currentTime}`);
       return;
     }
 
     if (lastSelectedTime === null) {
-      lastSelectedTime = dt;
+      lastSelectedTime = timestamp;
       lastSelectedSubscribers = subscribers;
-      csvRows.push([dt.toUTC().toISO(), subscribers, ''].join(','));
+      csvRows.push([timestamp.toISOString(), subscribers, ''].join(','));
       return;
     }
 
-    while (dt.toMillis() - lastSelectedTime.toMillis() > interval) {
-      lastSelectedTime = lastSelectedTime.plus({ milliseconds: interval });
-      csvRows.push([lastSelectedTime.toUTC().toISO(), '', ''].join(','));
+    while (timestamp.getTime() - lastSelectedTime.getTime() > interval) {
+      lastSelectedTime = new Date(lastSelectedTime.getTime() + interval);
+      csvRows.push([lastSelectedTime.toISOString(), '', ''].join(','));
     }
 
     const gainsInPastPeriod =
@@ -1156,10 +1109,10 @@ function convertDataToCSV(data, type = 'minutely') {
         : '';
 
     csvRows.push(
-      [dt.toUTC().toISO(), subscribers, gainsInPastPeriod].join(',')
+      [timestamp.toISOString(), subscribers, gainsInPastPeriod].join(',')
     );
 
-    lastSelectedTime = dt;
+    lastSelectedTime = timestamp;
     lastSelectedSubscribers = subscribers;
   });
 
