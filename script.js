@@ -162,7 +162,7 @@ function initializeTimeframeControls() {
       );
 
       const pastDayChartData = data.map(e => [
-        new Date(e.currentTime).getTime(),
+        DateTime.fromISO(e.currentTime).toMillis(),
         Number(e.count),
       ]);
       filteredMrbeastData = pastDayChartData;
@@ -278,8 +278,11 @@ async function updateInfoSection(filteredData) {
   const lastEntry = filteredData[filteredData.length - 1];
   const totalGained = lastEntry.count - firstEntry.count;
   const totalTime =
-    new Date(lastEntry.currentTime).getTime() -
-    new Date(firstEntry.currentTime).getTime();
+    DateTime.fromJSDate(
+      lastEntry.currentTime instanceof Date
+        ? lastEntry.currentTime
+        : new Date(lastEntry.currentTime)
+    ).toMillis() - DateTime.fromJSDate(firstEntry.currentTime).toMillis();
 
   const now = DateTime.now().setZone('America/New_York');
   const oneDayAgo = now.minus({ days: 1 });
@@ -695,7 +698,7 @@ async function fetchDataAndDrawChart() {
     const data = await response.json();
 
     allMrbeastData = data.map(entry => [
-      new Date(entry.currentTime).getTime(),
+      DateTime.fromISO(entry.currentTime).toMillis(),
       Number(entry.count),
     ]);
 
@@ -779,7 +782,7 @@ function filterDataByDate(date) {
       return entryDateEastern === date;
     })
     .map(entry => ({
-      currentTime: new Date(entry[0]),
+      currentTime: DateTime.fromMillis(entry[0]).toJSDate(),
       count: entry[1],
     }));
 }
@@ -828,7 +831,10 @@ function fillHourlyTable(data, selectedDate) {
   const prevDayStr = prevEastern.toFormat('yyyy-MM-dd');
 
   const yesterday = allMrbeastData
-    .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
+    .map(([ts, ct]) => ({
+      currentTime: DateTime.fromMillis(ts).toJSDate(),
+      count: ct,
+    }))
     .filter(
       e =>
         DateTime.fromJSDate(e.currentTime, {
@@ -859,7 +865,10 @@ function fillHourlyTable(data, selectedDate) {
   const nextUtc = selectedUtc.plus({ days: 1 });
 
   const extendedData = allMrbeastData
-    .map(([ts, ct]) => ({ currentTime: new Date(ts), count: ct }))
+    .map(([ts, ct]) => ({
+      currentTime: DateTime.fromMillis(ts).toJSDate(),
+      count: ct,
+    }))
     .filter(e => {
       const m = DateTime.fromJSDate(e.currentTime, { zone: 'utc' });
       return m.hasSame(selectedUtc, 'day') || m.hasSame(nextUtc, 'day');
@@ -913,9 +922,12 @@ function fillHourlyTable(data, selectedDate) {
           minute: '2-digit',
           timeZone: 'America/New_York',
         });
+        const nowFormatted = DateTime.now()
+          .setZone('America/New_York')
+          .toFormat('hh:mm a');
         gainCell.innerHTML +=
           `<br><span style="font-size:calc(0.9em - 15%)">` +
-          `As of ${fmt.format(new Date())} US Eastern</span>`;
+          `As of ${nowFormatted} US Eastern</span>`;
       }
 
       lastHourCount = cur;
@@ -940,7 +952,9 @@ function fillDailyTable(data) {
 
   const entries = data.map(e => ({
     currentTime:
-      e.currentTime instanceof Date ? e.currentTime : new Date(e.currentTime),
+      e.currentTime instanceof Date
+        ? e.currentTime
+        : DateTime.fromISO(e.currentTime).toJSDate(),
     count: Number(e.count),
   }));
 
@@ -1050,14 +1064,27 @@ function convertDataToCSV(data, type = 'minutely') {
 
   if (type === 'dailyEST') {
     const dailyData = [];
+    data.forEach(entry => {
+      const dt = DateTime.fromJSDate(
+        entry.currentTime instanceof Date
+          ? entry.currentTime
+          : new Date(entry.currentTime)
+      ).setZone('America/New_York');
 
+      if (dt.hour === 0) {
+        dailyData.push(entry);
+      }
+    });
+
+    let lastDate = null;
     dailyData.forEach(entry => {
       const dt = DateTime.fromJSDate(
         entry.currentTime instanceof Date
           ? entry.currentTime
-          : new Date(entry.currentTime),
-        { zone: 'America/New_York' }
-      ).startOf('day');
+          : DateTime.fromISO(entry.currentTime).toJSDate()
+      )
+        .setZone('America/New_York')
+        .startOf('day');
 
       const subscribers = entry.count;
 
@@ -1100,11 +1127,10 @@ function convertDataToCSV(data, type = 'minutely') {
       : 24 * 60 * 60 * 1000;
 
   data.forEach(entry => {
-    const dt = DateTime.fromJSDate(
+    const dt =
       entry.currentTime instanceof Date
-        ? entry.currentTime
-        : new Date(entry.currentTime)
-    );
+        ? DateTime.fromJSDate(entry.currentTime)
+        : DateTime.fromISO(entry.currentTime);
     const subscribers = entry.count;
 
     if (!dt.isValid) {
