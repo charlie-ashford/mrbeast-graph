@@ -272,10 +272,10 @@ function calculateGainedToday(data) {
 
 async function updateInfoSection(filteredData) {
   const firstEntry = {
-    currentTime: DateTime.fromISO('2025-01-01T00:00:00.000', {
+    currentTime: DateTime.fromISO('2026-01-01T00:00:00.000', {
       zone: 'America/New_York',
     }).toJSDate(),
-    count: 340665376,
+    count: 458131806,
   };
   const lastEntry = filteredData[filteredData.length - 1];
   const totalGained = lastEntry.count - firstEntry.count;
@@ -361,7 +361,7 @@ async function updateInfoSection(filteredData) {
     </div>
   </div>
   <div class="info-tile">
-    <div class="info-tile-header">2025 Growth</div>
+    <div class="info-tile-header">2026 Growth</div>
     <div class="info-tile-value">${formatNumber(totalGained)}</div>
     <div class="info-tile-change">
       <strong>Time elapsed:</strong> ${formatTime(totalTime)}
