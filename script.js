@@ -1135,41 +1135,7 @@ function downloadCSVFile(csvText, fileName) {
   }
 }
 
-function initShutdownBanner() {
-  const banner = document.getElementById('shutdownBanner');
-  const dateSpan = document.getElementById('shutdownDate');
-
-  if (!banner || !dateSpan) return;
-
-  const shutdownTimestamp = 1769045100;
-  const shutdownDate = new Date(shutdownTimestamp * 1000);
-
-  const options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  };
-
-  dateSpan.textContent = shutdownDate.toLocaleString(undefined, options);
-
-  document.body.classList.add('shutdown-banner-visible');
-  document.querySelector('.button-container')?.classList.add('with-banner');
-  document.querySelector('.timeframe-container')?.classList.add('with-banner');
-
-  if (Date.now() > shutdownTimestamp * 1000) {
-    banner.innerHTML = `
-      <i class="fas fa-info-circle"></i>
-      <span>
-        <strong>Service Ended:</strong> This site has been discontinued
-      </span>
-    `;
-  }
-}
-
 document.addEventListener('DOMContentLoaded', async function () {
-  initShutdownBanner();
   const dropdownButton = document.getElementById('exportCsvButton');
   const dropdownContent = document.querySelector('.dropdown-content');
   const dropdownContainer = document.querySelector('.dropdown');
