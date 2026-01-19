@@ -1001,16 +1001,16 @@ function convertDataToCSV(data, type = 'minutely') {
     type === 'minutely'
       ? 'Minutely Gains'
       : type === 'minutelyPastWeek'
-      ? 'Minutely Gains'
-      : type === 'minutelyPastDay'
-      ? 'Minutely Gains'
-      : type === 'tenminutely'
-      ? '10 Minutely Gains'
-      : type === 'hourly'
-      ? 'Hourly Gains'
-      : type === 'dailyEST'
-      ? 'Daily Gains (EST)'
-      : 'Daily Gains',
+        ? 'Minutely Gains'
+        : type === 'minutelyPastDay'
+          ? 'Minutely Gains'
+          : type === 'tenminutely'
+            ? '10 Minutely Gains'
+            : type === 'hourly'
+              ? 'Hourly Gains'
+              : type === 'dailyEST'
+                ? 'Daily Gains (EST)'
+                : 'Daily Gains',
   ];
   csvRows.push(headers.join(','));
 
@@ -1073,14 +1073,14 @@ function convertDataToCSV(data, type = 'minutely') {
     type === 'minutely'
       ? 60 * 1000
       : type === 'minutelyPastWeek'
-      ? 60 * 1000
-      : type === 'minutelyPastDay'
-      ? 60 * 1000
-      : type === 'tenminutely'
-      ? 10 * 60 * 1000
-      : type === 'hourly'
-      ? 60 * 60 * 1000
-      : 24 * 60 * 60 * 1000;
+        ? 60 * 1000
+        : type === 'minutelyPastDay'
+          ? 60 * 1000
+          : type === 'tenminutely'
+            ? 10 * 60 * 1000
+            : type === 'hourly'
+              ? 60 * 60 * 1000
+              : 24 * 60 * 60 * 1000;
 
   data.forEach(entry => {
     const timestamp = new Date(entry.currentTime);
@@ -1135,7 +1135,41 @@ function downloadCSVFile(csvText, fileName) {
   }
 }
 
+function initShutdownBanner() {
+  const banner = document.getElementById('shutdownBanner');
+  const dateSpan = document.getElementById('shutdownDate');
+
+  if (!banner || !dateSpan) return;
+
+  const shutdownTimestamp = 1769045100;
+  const shutdownDate = new Date(shutdownTimestamp * 1000);
+
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  };
+
+  dateSpan.textContent = shutdownDate.toLocaleString(undefined, options);
+
+  document.body.classList.add('shutdown-banner-visible');
+  document.querySelector('.button-container')?.classList.add('with-banner');
+  document.querySelector('.timeframe-container')?.classList.add('with-banner');
+
+  if (Date.now() > shutdownTimestamp * 1000) {
+    banner.innerHTML = `
+      <i class="fas fa-info-circle"></i>
+      <span>
+        <strong>Service Ended:</strong> This site has been discontinued
+      </span>
+    `;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
+  initShutdownBanner();
   const dropdownButton = document.getElementById('exportCsvButton');
   const dropdownContent = document.querySelector('.dropdown-content');
   const dropdownContainer = document.querySelector('.dropdown');

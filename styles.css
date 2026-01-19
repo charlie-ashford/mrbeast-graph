@@ -81,7 +81,8 @@ h2 {
   padding: 34px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25),
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   backdrop-filter: blur(10px);
@@ -96,14 +97,16 @@ h2 {
 .info-tile:nth-child(2) {
   padding: 28px;
   border-radius: 16px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22),
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.09);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .info-tile:hover {
   transform: scale(1.05);
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22),
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.13);
   animation: pulse 1.5s infinite;
 }
@@ -270,7 +273,10 @@ h2 {
   cursor: pointer;
   will-change: transform, background-color, color, box-shadow;
   border-radius: 12px !important;
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease,
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease,
     transform 0.3s ease;
   margin-bottom: 12px;
   width: 225px;
@@ -285,7 +291,8 @@ h2 {
 .timeframe-container button:hover {
   background-color: #4dd0ee;
   color: #1e1e1e;
-  box-shadow: 0 0 0 3px rgba(0, 188, 231, 0.3),
+  box-shadow:
+    0 0 0 3px rgba(0, 188, 231, 0.3),
     0 4px 16px rgba(0, 188, 231, 0.1);
   transform: scale(1.02);
 }
@@ -339,7 +346,11 @@ h2 {
   border: none;
   width: 100%;
   text-align: left;
-  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s;
   border-radius: 0 !important;
   margin-bottom: 0;
 }
@@ -1040,5 +1051,50 @@ select:focus:not(:focus-visible) {
   .secondary-times {
     font-size: 0.75em;
     margin-top: 1px;
+  }
+}
+
+.shutdown-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #fd37a0;
+  color: #ffffff;
+  padding: 12px 20px;
+  text-align: center;
+  z-index: 10000;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.shutdown-banner i {
+  padding-right: 6px !important;
+}
+
+.shutdown-banner strong {
+  font-weight: 700;
+}
+
+body.shutdown-banner-visible {
+  padding-top: 48px;
+}
+
+.button-container.with-banner {
+  top: 73px;
+}
+
+.timeframe-container.with-banner {
+  top: 193px;
+}
+
+@media (max-width: 800px) {
+  .shutdown-banner {
+    font-size: 0.85rem;
+    padding: 10px 16px;
+  }
+
+  body.shutdown-banner-visible {
+    padding-top: 48px;
   }
 }
